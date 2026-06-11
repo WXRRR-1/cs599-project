@@ -1,4 +1,4 @@
-"""Paper summary agent with configurable LLM provider and mock fallback."""
+"""Paper summary agent with DeepSeek-compatible LLM support and mock fallback."""
 
 from __future__ import annotations
 
@@ -9,9 +9,6 @@ from config import (
     DEEPSEEK_BASE_URL,
     DEEPSEEK_MODEL,
     LLM_PROVIDER,
-    OPENAI_API_KEY,
-    OPENAI_BASE_URL,
-    OPENAI_MODEL,
 )
 
 
@@ -32,7 +29,7 @@ def _mock_summary(paper: dict) -> dict:
         "problem": "论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。",
         "method": f"根据摘要，论文主要方法包括：{abstract}",
         "contribution": "该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。",
-        "limitation": "当前 mock 模式仅基于标题和摘要生成概括，具体局限性需要进一步阅读全文确认。",
+        "limitation": "当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。",
         "url": paper.get("url", ""),
     }
 
@@ -41,8 +38,8 @@ def _build_prompt(paper: dict) -> str:
     return f"""
 请基于下面论文的标题和摘要，生成中文结构化总结。
 要求：
-1. 只基于给定标题和摘要，不要编造摘要中没有的信息；
-2. 如果某项信息无法判断，请写“摘要中未明确说明”；
+1. 只基于给定标题、作者、年份、链接和摘要，不要编造摘要中没有的信息；
+2. 如果某项信息无法判断，请写“摘要信息有限，无法判断”；
 3. 只返回 JSON，不要输出 Markdown。
 
 JSON 字段：
@@ -56,25 +53,17 @@ title, year, authors, background, problem, method, contribution, limitation, url
 """.strip()
 
 
-def _call_openai_compatible(paper: dict, provider: str) -> dict:
-    """Call OpenAI-compatible chat completion APIs and parse JSON result."""
+def _call_deepseek(paper: dict) -> dict:
+    """Call DeepSeek through the OpenAI-compatible SDK and parse JSON result."""
     from openai import OpenAI
 
-    if provider == "openai":
-        if not OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY 未配置")
-        client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
-        model = OPENAI_MODEL
-    elif provider == "deepseek":
-        if not DEEPSEEK_API_KEY:
-            raise ValueError("DEEPSEEK_API_KEY 未配置")
-        client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
-        model = DEEPSEEK_MODEL
-    else:
-        raise ValueError(f"不支持的 LLM_PROVIDER：{provider}")
+    if not DEEPSEEK_API_KEY:
+        raise ValueError("DEEPSEEK_API_KEY 未配置")
+
+    client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 
     response = client.chat.completions.create(
-        model=model,
+        model=DEEPSEEK_MODEL,
         messages=[
             {"role": "system", "content": "你是严谨的中文学术文献总结助手。"},
             {"role": "user", "content": _build_prompt(paper)},
@@ -98,9 +87,11 @@ def summarize_paper(paper: dict) -> dict:
         return _mock_summary(paper)
 
     try:
-        return _call_openai_compatible(paper, provider)
+        if provider != "deepseek":
+            raise ValueError(f"不支持的 LLM_PROVIDER：{provider}")
+        return _call_deepseek(paper)
     except Exception as exc:
-        print(f"LLM 总结失败，已回退到 mock 模式：{exc}")
+        print(f"DeepSeek 总结失败，已回退到 mock 模式：{exc.__class__.__name__}")
         return _mock_summary(paper)
 
 

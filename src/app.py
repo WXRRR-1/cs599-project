@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from config import LLM_PROVIDER
 from main import run_research
 
 
@@ -11,6 +12,12 @@ st.set_page_config(page_title="ResearchFlow-Agent", layout="wide")
 
 st.title("ResearchFlow-Agent")
 st.write("面向研究生的自动化文献调研与报告生成智能体")
+
+st.info(f"当前 LLM Provider: {LLM_PROVIDER}")
+if LLM_PROVIDER == "deepseek":
+    st.success("当前使用 DeepSeek API 生成论文总结。")
+else:
+    st.warning("当前未使用真实 LLM，总结内容由 mock 模式生成。")
 
 topic = st.text_input("研究主题", value="Agentic RAG")
 

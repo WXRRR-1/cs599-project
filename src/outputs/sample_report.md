@@ -1,8 +1,8 @@
-# 文献调研报告：reinforcement learning
+# 文献调研报告：Agentic RAG
 
 ## 1. 研究主题
 
-本报告围绕 **reinforcement learning** 进行自动化文献调研，目标是快速了解相关研究方向中的代表性论文、核心方法与初步研究结论。
+本报告围绕 **Agentic RAG** 进行自动化文献调研，目标是快速了解相关研究方向中的代表性论文、核心方法与初步研究结论。
 
 ## 2. 检索与筛选说明
 
@@ -10,60 +10,60 @@
 
 ## 3. 代表性论文列表
 
-1. **Reinforcement Learning: An Introduction**（2005）- Richard S. Sutton, Andrew G. Barto
-2. **Reinforcement Learning: A Survey**（1996）- Leslie Pack Kaelbling, Michael L. Littman, Andrew Moore
-3. **Introduction to Reinforcement Learning**（1998）- Richard S. Sutton, Andrew G. Barto
+1. **Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG**（2025）- Aditi Singh, Abul Ehtesham, Saket Kumar, Tala Talaei Khoei, Vasilakos, Athanasios V.
+2. **Multi-Agent RAG Chatbot Architecture for Decision Support in Net-Zero Emission Energy Systems**（2024）- Gihan Gamage, Nishan Mills, Daswin De Silva, Milos Manic, Harsha Moraliyage, Andrew Jennings, Damminda Alahakoon
+3. **Sustainable Digitalization of Business with Multi-Agent RAG and LLM**（2024）- Muhammad Arslan, Saba Munawar, Christophe Cruz
 
 ## 4. 单篇论文结构化总结
 
-### 论文 1：Reinforcement Learning: An Introduction
+### 论文 1：Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG
 
-- 年份：2005
-- 作者：Richard S. Sutton, Andrew G. Barto
-- 研究背景：该论文围绕“Reinforcement Learning: An Introduction”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
+- 年份：2025
+- 作者：Aditi Singh, Abul Ehtesham, Saket Kumar, Tala Talaei Khoei, Vasilakos, Athanasios V.
+- 研究背景：该论文围绕“Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
 - 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
-- 核心方法：根据摘要，论文主要方法包括：An account of key ideas and algorithms in reinforcement learning. The discussion ranges from the history of the field's intellectual foundations to recent developments and applicat...
+- 核心方法：根据摘要，论文主要方法包括：Large Language Models (LLMs) have advanced artificial intelligence by enabling human-like text generation and natural language understanding. However, their reliance on static trai...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
-- 局限性：当前 mock 模式仅基于标题和摘要生成概括，具体局限性需要进一步阅读全文确认。
-- 链接：https://doi.org/10.1109/tnn.2004.842673
+- 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。
+- 链接：http://arxiv.org/abs/2501.09136
 
-### 论文 2：Reinforcement Learning: A Survey
+### 论文 2：Multi-Agent RAG Chatbot Architecture for Decision Support in Net-Zero Emission Energy Systems
 
-- 年份：1996
-- 作者：Leslie Pack Kaelbling, Michael L. Littman, Andrew Moore
-- 研究背景：该论文围绕“Reinforcement Learning: A Survey”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
+- 年份：2024
+- 作者：Gihan Gamage, Nishan Mills, Daswin De Silva, Milos Manic, Harsha Moraliyage, Andrew Jennings, Damminda Alahakoon
+- 研究背景：该论文围绕“Multi-Agent RAG Chatbot Architecture for Decision Support in Net-Zero Emission Energy Systems”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
 - 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
-- 核心方法：根据摘要，论文主要方法包括：This paper surveys the field of reinforcement learning from a computer-science perspective. It is written to be accessible to researchers familiar with machine learning. Both the h...
+- 核心方法：根据摘要，论文主要方法包括：Modern energy platforms are increasingly leveraging Artificial Intelligence (AI) for effective decision-making and efficient operations. This has led to the development of expansiv...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
-- 局限性：当前 mock 模式仅基于标题和摘要生成概括，具体局限性需要进一步阅读全文确认。
-- 链接：https://doi.org/10.1613/jair.301
+- 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。
+- 链接：https://doi.org/10.1109/icit58233.2024.10540920
 
-### 论文 3：Introduction to Reinforcement Learning
+### 论文 3：Sustainable Digitalization of Business with Multi-Agent RAG and LLM
 
-- 年份：1998
-- 作者：Richard S. Sutton, Andrew G. Barto
-- 研究背景：该论文围绕“Introduction to Reinforcement Learning”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
+- 年份：2024
+- 作者：Muhammad Arslan, Saba Munawar, Christophe Cruz
+- 研究背景：该论文围绕“Sustainable Digitalization of Business with Multi-Agent RAG and LLM”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
 - 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
-- 核心方法：根据摘要，论文主要方法包括：From the Publisher: In Reinforcement Learning, Richard Sutton and Andrew Barto provide a clear and simple account of the key ideas and algorithms of reinforcement learning. Their d...
+- 核心方法：根据摘要，论文主要方法包括：Businesses heavily rely on data sourced from various channels like news articles, financial reports, and consumer reviews to drive their operations, enabling informed decision-maki...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
-- 局限性：当前 mock 模式仅基于标题和摘要生成概括，具体局限性需要进一步阅读全文确认。
-- 链接：http://portal.acm.org/citation.cfm?id=551283
+- 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。
+- 链接：https://doi.org/10.1016/j.procs.2024.09.337
 
 
 ## 5. 文献对比表
 
 | 论文 | 年份 | 核心方法 | 主要贡献 | 局限性 |
 |---|---:|---|---|---|
-| Reinforcement Learning: An Introduction | 2005 | 根据摘要，论文主要方法包括：An account of key ideas and algorithms in reinforcement learning. The discussion ranges from the history of the field's intellectual foundations to recent developments and applicat... | 该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。 | 当前 mock 模式仅基于标题和摘要生成概括，具体局限性需要进一步阅读全文确认。 |
-| Reinforcement Learning: A Survey | 1996 | 根据摘要，论文主要方法包括：This paper surveys the field of reinforcement learning from a computer-science perspective. It is written to be accessible to researchers familiar with machine learning. Both the h... | 该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。 | 当前 mock 模式仅基于标题和摘要生成概括，具体局限性需要进一步阅读全文确认。 |
-| Introduction to Reinforcement Learning | 1998 | 根据摘要，论文主要方法包括：From the Publisher: In Reinforcement Learning, Richard Sutton and Andrew Barto provide a clear and simple account of the key ideas and algorithms of reinforcement learning. Their d... | 该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。 | 当前 mock 模式仅基于标题和摘要生成概括，具体局限性需要进一步阅读全文确认。 |
+| Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG | 2025 | 根据摘要，论文主要方法包括：Large Language Models (LLMs) have advanced artificial intelligence by enabling human-like text generation and natural language understanding. However, their reliance on static trai... | 该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。 | 当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。 |
+| Multi-Agent RAG Chatbot Architecture for Decision Support in Net-Zero Emission Energy Systems | 2024 | 根据摘要，论文主要方法包括：Modern energy platforms are increasingly leveraging Artificial Intelligence (AI) for effective decision-making and efficient operations. This has led to the development of expansiv... | 该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。 | 当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。 |
+| Sustainable Digitalization of Business with Multi-Agent RAG and LLM | 2024 | 根据摘要，论文主要方法包括：Businesses heavily rely on data sourced from various channels like news articles, financial reports, and consumer reviews to drive their operations, enabling informed decision-maki... | 该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。 | 当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。 |
 
 ## 6. 初步结论
 
-从当前检索结果看，**reinforcement learning** 相关研究通常围绕任务建模、系统架构、方法评估与实际应用展开。v0.1 Demo 的结论仅基于标题和摘要，适合作为课程展示中的初步文献调研材料；后续版本可进一步加入多步骤 Agent 工作流、交叉验证与全文级分析。
+从当前检索结果看，**Agentic RAG** 相关研究通常围绕任务建模、系统架构、方法评估与实际应用展开。v0.1 Demo 的结论仅基于标题和摘要，适合作为课程展示中的初步文献调研材料；后续版本可进一步加入多步骤 Agent 工作流、交叉验证与全文级分析。
 
 ## 7. 参考文献
 
-1. Richard S. Sutton, Andrew G. Barto. Reinforcement Learning: An Introduction. 2005. https://doi.org/10.1109/tnn.2004.842673
-2. Leslie Pack Kaelbling, Michael L. Littman, Andrew Moore. Reinforcement Learning: A Survey. 1996. https://doi.org/10.1613/jair.301
-3. Richard S. Sutton, Andrew G. Barto. Introduction to Reinforcement Learning. 1998. http://portal.acm.org/citation.cfm?id=551283
+1. Aditi Singh, Abul Ehtesham, Saket Kumar, Tala Talaei Khoei, Vasilakos, Athanasios V.. Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG. 2025. http://arxiv.org/abs/2501.09136
+2. Gihan Gamage, Nishan Mills, Daswin De Silva, Milos Manic, Harsha Moraliyage, Andrew Jennings, Damminda Alahakoon. Multi-Agent RAG Chatbot Architecture for Decision Support in Net-Zero Emission Energy Systems. 2024. https://doi.org/10.1109/icit58233.2024.10540920
+3. Muhammad Arslan, Saba Munawar, Christophe Cruz. Sustainable Digitalization of Business with Multi-Agent RAG and LLM. 2024. https://doi.org/10.1016/j.procs.2024.09.337

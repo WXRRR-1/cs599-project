@@ -19,7 +19,7 @@
 
 ## 4. 技术路线
 
-项目采用 Python 3.10+ 开发，使用 requests 调用 OpenAlex API，并使用 Python 标准库 urllib 调用 arXiv API；使用 python-dotenv 管理环境变量，使用 OpenAI SDK 兼容 OpenAI 和 DeepSeek 风格接口，并使用 Streamlit 构建轻量交互页面。默认使用 mock 模式，保证未配置 LLM API Key 时仍可完成完整 Demo 流程。
+项目采用 Python 3.10+ 开发，使用 requests 调用 OpenAlex API，并使用 Python 标准库 urllib 调用 arXiv API；使用 python-dotenv 管理环境变量，使用 OpenAI-compatible SDK 调用 DeepSeek API，并使用 Streamlit 构建轻量交互页面。默认使用 mock 模式，保证未配置 DeepSeek API Key 时仍可完成完整 Demo 流程。
 
 ## 5. v0.1 Demo 范围
 

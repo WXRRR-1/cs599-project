@@ -1,15 +1,14 @@
 """Paper search tool based on OpenAlex Works API.
 
-OpenAlex provides broad scholarly metadata across disciplines. Newer OpenAlex
-API documentation requires a free API key, so this tool reads OPENALEX_API_KEY
-from the environment and fails gracefully when the key or network is unavailable.
+OpenAlex provides broad scholarly metadata across disciplines. This tool can
+send an optional OPENALEX_EMAIL value as a polite-pool contact parameter.
 """
 
 from __future__ import annotations
 
 import requests
 
-from config import OPENALEX_API_KEY, OPENALEX_BASE_URL
+from config import OPENALEX_BASE_URL, OPENALEX_EMAIL
 from tools.http_client import describe_request_error, get_request_proxies
 
 
@@ -85,8 +84,8 @@ def search_openalex_papers(query: str, limit: int = 10) -> list[dict]:
             ]
         ),
     }
-    if OPENALEX_API_KEY:
-        params["api_key"] = OPENALEX_API_KEY
+    if OPENALEX_EMAIL:
+        params["mailto"] = OPENALEX_EMAIL
 
     try:
         response = requests.get(

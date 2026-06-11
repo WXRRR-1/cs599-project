@@ -12,26 +12,29 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 v0.1 Demo
 
-## 核心功能
+## 已实现功能
 
-- 调用 OpenAlex API 检索相关论文
+- 输入研究主题并启动自动化调研流程
+- 优先调用 OpenAlex API 检索相关论文
 - OpenAlex 不可用时自动切换到 arXiv API
 - 获取论文标题、作者、年份、摘要、引用量、链接和 venue
 - 按引用量和年份筛选代表性论文
-- 支持 OpenAI、DeepSeek 和 Mock Mode 生成中文总结
+- 使用 DeepSeek API 或 Mock Mode 生成中文结构化总结
 - 生成 Markdown 格式文献调研报告
 - 使用 Streamlit 展示结果并支持下载
 - 将报告保存到 `src/outputs/sample_report.md`
+- 使用 `src/check_apis.py` 检查学术 API 连通性
 
 ## 技术栈
 
 - AI Development Tool: OpenAI Codex
 - Language: Python
 - UI: Streamlit
-- Paper Search: OpenAlex API
-- Fallback Search: arXiv API
-- LLM: OpenAI / DeepSeek / Mock Mode
+- Paper Search: OpenAlex API, arXiv API
+- LLM: DeepSeek API / Mock Mode
+- LLM SDK: OpenAI-compatible SDK
 - Report Format: Markdown
+- Version Control: GitHub
 
 ## 项目结构
 
@@ -43,6 +46,7 @@ cs599-project/
 │   ├── app.py
 │   ├── main.py
 │   ├── config.py
+│   ├── check_apis.py
 │   ├── tools/
 │   │   ├── openalex_search_tool.py
 │   │   ├── arxiv_search_tool.py
@@ -71,50 +75,39 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## 环境变量配置
+## DeepSeek API 配置
 
-复制 `.env.example` 为 `.env`，再按需填写 API Key。
+复制 `.env.example` 为 `.env`：
 
 ```bash
 copy .env.example .env
 ```
 
-默认配置为：
+如果需要使用真实 LLM 总结，在 `.env` 中填写：
+
+```env
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=你的 DeepSeek API Key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+```
+
+本项目使用 `openai` Python SDK 的 OpenAI-compatible 写法调用 DeepSeek API。`openai` 只是兼容 SDK，不表示本项目把 OpenAI API 作为主 LLM 方案。
+
+如果没有配置 DeepSeek API Key，保持默认配置即可：
 
 ```env
 LLM_PROVIDER=mock
 ```
 
-mock 模式不需要配置任何 LLM API Key，也可以跑通完整 Demo。
+mock 模式不需要任何 LLM API Key，也可以跑通完整 Demo。
 
-如果所有外部学术 API 都被限流或暂时没有结果，项目默认会启用内置示例论文，保证页面中可以看到完整报告效果：
+## 学术 API 与网络配置
 
-```env
-USE_DEMO_FALLBACK=true
-```
-
-可选配置：
+OpenAlex 和 arXiv 用于论文检索：
 
 ```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4o-mini
-```
-
-或：
-
-```env
-LLM_PROVIDER=deepseek
-DEEPSEEK_API_KEY=your_deepseek_api_key
-DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-chat
-```
-
-学术检索 API 配置：
-
-```env
-OPENALEX_API_KEY=
+OPENALEX_EMAIL=
 OPENALEX_BASE_URL=https://api.openalex.org/works
 ARXIV_BASE_URL=http://export.arxiv.org/api/query
 ```
@@ -125,10 +118,10 @@ ARXIV_BASE_URL=http://export.arxiv.org/api/query
 NETWORK_PROXY=http://127.0.0.1:7890
 ```
 
-检查学术 API 的连通性：
+如果所有外部学术 API 都被限流或暂时没有结果，项目默认会启用内置示例论文，保证页面中可以看到完整报告效果：
 
-```bash
-python src/check_apis.py
+```env
+USE_DEMO_FALLBACK=true
 ```
 
 ## 运行方式
@@ -153,15 +146,31 @@ streamlit run src/app.py
 
 在页面中输入研究主题，点击“开始调研”，即可查看并下载 Markdown 报告。
 
+### API 连通性检查
+
+```bash
+python src/check_apis.py
+```
+
 ## 项目状态
 
 - [x] Proposal
+- [x] v0.1 Demo
 - [ ] MVP
 - [ ] Final
 
-## 注意事项
+## 安全说明
 
 - 不得硬编码 API Key
-- `.env` 文件不要上传到 GitHub
-- 当前版本只基于论文标题和摘要生成总结，不代表完整论文精读结论
-- 如果外部学术 API 请求失败，系统会回退到内置示例论文，保证 Demo 页面可展示
+- `.env` 文件不得上传 GitHub
+- `.env.example` 只保留环境变量名称和示例配置
+- 程序日志不得输出真实 API Key
+- 本项目默认使用 mock 模式，避免没有 LLM API Key 时无法运行
+
+## References
+
+- OpenAlex API: https://docs.openalex.org/
+- arXiv API: https://info.arxiv.org/help/api/
+- DeepSeek API: https://api-docs.deepseek.com/
+- Streamlit: https://streamlit.io/
+- OpenAI-compatible Python SDK: https://github.com/openai/openai-python
