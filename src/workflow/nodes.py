@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from agents.filter_agent import filter_papers
 from agents.report_agent import generate_report, save_report
-from agents.summary_agent import summarize_papers
+from agents.summary_agent import get_active_llm_provider, summarize_papers
 from config import LLM_PROVIDER, USE_DEMO_FALLBACK
 from tools.arxiv_search_tool import search_arxiv_papers
 from tools.demo_paper_tool import get_demo_papers
@@ -46,7 +46,7 @@ def planner_node(state: ResearchState) -> ResearchState:
 def search_node(state: ResearchState) -> ResearchState:
     """Search papers using OpenAlex, arXiv, and optional demo fallback."""
     topic = state.get("topic") or "Agentic RAG"
-    limit = int(state.get("limit") or 10)
+    limit = max(1, int(state.get("limit") or 10))
 
     try:
         papers = search_openalex_papers(topic, limit=limit)
@@ -96,7 +96,7 @@ def search_node(state: ResearchState) -> ResearchState:
 def filter_node(state: ResearchState) -> ResearchState:
     """Filter candidate papers using the existing rule-based filter."""
     papers = state.get("candidate_papers", [])
-    top_k = int(state.get("top_k") or 5)
+    top_k = max(1, int(state.get("top_k") or 5))
 
     try:
         selected = filter_papers(papers, top_k=top_k)
@@ -115,16 +115,22 @@ def filter_node(state: ResearchState) -> ResearchState:
 def summary_node(state: ResearchState) -> ResearchState:
     """Summarize selected papers with DeepSeek or mock fallback."""
     selected = state.get("selected_papers", [])
-    provider = LLM_PROVIDER if LLM_PROVIDER in {"deepseek", "mock"} else "mock"
+    configured_provider = LLM_PROVIDER if LLM_PROVIDER in {"deepseek", "mock"} else "mock"
 
     try:
         summaries = summarize_papers(selected)
-        fallback_note = "；DeepSeek 调用失败时会自动回退到 mock" if provider == "deepseek" else ""
+        active_provider = get_active_llm_provider()
+        fallback_note = (
+            "；DeepSeek 调用失败时会自动回退到 mock"
+            if configured_provider == "deepseek"
+            else ""
+        )
         return {
             "summaries": summaries,
             "logs": _with_logs(
                 state,
-                f"Summary: 当前 LLM_PROVIDER={provider}{fallback_note}",
+                f"Summary: 配置 LLM_PROVIDER={configured_provider}{fallback_note}",
+                f"Summary: 实际使用 provider={active_provider}",
                 f"Summary: 总结论文数量 {len(summaries)}",
             ),
         }
@@ -163,6 +169,7 @@ def evaluator_node(state: ResearchState) -> ResearchState:
     report = state.get("report", "")
     selected = state.get("selected_papers", [])
     errors = state.get("errors", [])
+    active_provider = get_active_llm_provider()
 
     evaluation = {
         "candidate_count": len(state.get("candidate_papers", [])),
@@ -171,15 +178,18 @@ def evaluator_node(state: ResearchState) -> ResearchState:
         "has_references": "## 7. 参考文献" in report and "暂无参考文献" not in report,
         "has_comparison_table": "| 论文 | 年份 | 核心方法 | 主要贡献 | 局限性 |" in report,
         "has_errors": bool(errors),
-        "llm_provider": LLM_PROVIDER if LLM_PROVIDER in {"deepseek", "mock"} else "mock",
+        "llm_provider": active_provider,
+        "fallback_used": active_provider in {"mock", "deepseek_failed_fallback_mock"},
         "search_source": state.get("search_source", "unknown"),
     }
-    evaluation["status"] = "pass" if (
-        evaluation["has_report"]
+    evaluation["status"] = (
+        "pass"
+        if evaluation["has_report"]
         and evaluation["paper_count"] > 0
         and evaluation["has_comparison_table"]
         and not evaluation["has_errors"]
-    ) else "warning"
+        else "warning"
+    )
 
     return {
         "evaluation": evaluation,

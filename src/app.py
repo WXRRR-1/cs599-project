@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import streamlit as st
 
-from config import LLM_PROVIDER
+from config import LLM_PROVIDER, USE_DEMO_FALLBACK
 from main import run_research
+from memory.history_store import load_recent_history
 
 
 st.set_page_config(page_title="ResearchFlow-Agent", layout="wide")
@@ -13,11 +14,15 @@ st.set_page_config(page_title="ResearchFlow-Agent", layout="wide")
 st.title("ResearchFlow-Agent")
 st.write("面向研究生的自动化文献调研与报告生成智能体")
 
-st.info(f"当前 LLM Provider: {LLM_PROVIDER}")
+status_col1, status_col2, status_col3 = st.columns(3)
+status_col1.info(f"配置 LLM Provider: {LLM_PROVIDER}")
+status_col2.info("Mock summary fallback: 已启用")
+status_col3.info(f"Demo paper fallback: {'已启用' if USE_DEMO_FALLBACK else '未启用'}")
+
 if LLM_PROVIDER == "deepseek":
-    st.success("当前使用 DeepSeek API 生成论文总结。")
+    st.success("当前配置为 DeepSeek API。若调用失败，系统会自动回退到 mock 总结。")
 else:
-    st.warning("当前未使用真实 LLM，总结内容由 mock 模式生成。")
+    st.warning("当前配置为 mock 模式，不需要 LLM API Key，也可以跑通完整 Demo。")
 
 topic = st.text_input("研究主题", value="Agentic RAG")
 
@@ -25,66 +30,78 @@ col1, col2 = st.columns(2)
 with col1:
     limit = st.number_input("检索论文数量 limit", min_value=1, max_value=50, value=10, step=1)
 with col2:
-    top_k = st.number_input("筛选论文数量 top_k", min_value=1, max_value=10, value=5, step=1)
+    top_k = st.number_input("筛选论文数量 top_k", min_value=1, max_value=20, value=5, step=1)
 
 if st.button("开始调研", type="primary"):
+    normalized_topic = topic.strip() or "Agentic RAG"
     if not topic.strip():
-        st.warning("请输入研究主题。")
-    else:
-        with st.status("LangGraph Agent 正在执行调研工作流...", expanded=True) as status:
-            st.write("Planner → Search → Filter → Summary → Report → Evaluator")
-            result = run_research(topic.strip(), limit=int(limit), top_k=int(top_k))
-            status.update(label="调研报告已生成", state="complete")
+        st.info("研究主题为空，已使用默认主题 Agentic RAG。")
 
-        candidate_papers = result.get("candidate_papers", [])
-        selected_papers = result.get("selected_papers", [])
-        evaluation = result.get("evaluation", {})
-        logs = result.get("logs", [])
-        errors = result.get("errors", [])
-        report = result.get("report", "")
+    with st.status("LangGraph Agent 正在执行调研工作流...", expanded=True) as status:
+        st.write("Planner -> Search -> Filter -> Summary -> Report -> Evaluator")
+        result = run_research(normalized_topic, limit=int(limit), top_k=int(top_k))
+        status.update(label="调研报告已生成", state="complete")
 
-        metric_col1, metric_col2, metric_col3 = st.columns(3)
-        metric_col1.metric("候选论文数量", len(candidate_papers))
-        metric_col2.metric("筛选后论文数量", len(selected_papers))
-        metric_col3.metric("Evaluation", evaluation.get("status", "unknown"))
+    candidate_papers = result.get("candidate_papers", []) or []
+    selected_papers = result.get("selected_papers", []) or []
+    evaluation = result.get("evaluation", {}) or {}
+    logs = result.get("logs", []) or []
+    errors = result.get("errors", []) or []
+    report = result.get("report", "") or ""
 
-        if selected_papers:
-            st.subheader("筛选后论文")
-            table_rows = [
-                {
-                    "title": paper.get("title", ""),
-                    "year": paper.get("year", ""),
-                    "authors": paper.get("authors", ""),
-                    "citationCount": paper.get("citationCount", 0),
-                    "venue": paper.get("venue", ""),
-                    "url": paper.get("url", ""),
-                }
-                for paper in selected_papers
-            ]
-            st.dataframe(table_rows, use_container_width=True)
+    metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+    metric_col1.metric("候选论文数量", len(candidate_papers))
+    metric_col2.metric("筛选后论文数量", len(selected_papers))
+    metric_col3.metric("Evaluation", evaluation.get("status", "unknown"))
+    metric_col4.metric("实际 LLM", evaluation.get("llm_provider", "unknown"))
 
-        if logs:
-            with st.expander("Agent 执行日志", expanded=True):
-                for log in logs:
-                    st.write(f"- {log}")
+    if selected_papers:
+        st.subheader("筛选后论文")
+        table_rows = [
+            {
+                "title": paper.get("title", ""),
+                "year": paper.get("year", ""),
+                "authors": paper.get("authors", ""),
+                "citationCount": paper.get("citationCount", 0),
+                "venue": paper.get("venue", ""),
+                "url": paper.get("url", ""),
+            }
+            for paper in selected_papers
+        ]
+        st.dataframe(table_rows, use_container_width=True)
 
-        if evaluation:
-            with st.expander("Evaluation 结果", expanded=True):
-                st.json(evaluation)
+    if logs:
+        with st.expander("LangGraph 执行日志", expanded=True):
+            for log in logs:
+                st.write(f"- {log}")
 
-        if errors:
-            st.warning("工作流执行过程中出现可恢复问题：")
-            for error in errors:
-                st.write(f"- {error}")
+    if evaluation:
+        with st.expander("Evaluation 结果", expanded=True):
+            st.json(evaluation)
 
-        st.subheader("生成的 Markdown 报告")
-        st.markdown(report)
-        st.download_button(
-            label="下载报告",
-            data=report,
-            file_name="sample_report.md",
-            mime="text/markdown",
-        )
+    if errors:
+        st.warning("工作流执行过程中出现可恢复问题：")
+        for error in errors:
+            st.write(f"- {error}")
+
+    st.subheader("生成的 Markdown 报告")
+    st.markdown(report)
+    st.download_button(
+        label="下载报告",
+        data=report,
+        file_name="sample_report.md",
+        mime="text/markdown",
+    )
 
 st.divider()
-st.caption("当前为 v0.2 Demo；使用 LangGraph 编排 Planner、Search、Filter、Summary、Report、Evaluator 节点；LLM 使用 DeepSeek API 或 mock 模式。")
+st.subheader("最近任务历史")
+recent_history = load_recent_history(limit=10)
+if recent_history:
+    st.dataframe(recent_history, use_container_width=True)
+else:
+    st.caption("暂无历史记录。运行一次调研后会自动生成。")
+
+st.caption(
+    "当前为 v0.3 Demo；使用 OpenAlex / arXiv 检索论文，"
+    "使用 LangGraph 编排多步骤 Agent 工作流，使用 DeepSeek API 或 mock 模式生成总结。"
+)

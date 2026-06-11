@@ -23,7 +23,7 @@
 - 年份：1979
 - 作者：Eugene Rosenberg, A. Zuckerberg, C. Rubinovitz, David L. Gutnick
 - 研究背景：该论文围绕“Emulsifier of Arthrobacter RAG-1: isolation and emulsifying properties”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
-- 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
+- 研究问题：论文关注的核心问题可从摘要中概括为：如何在已有方法基础上提升任务效果、系统能力或应用可靠性。
 - 核心方法：根据摘要，论文主要方法包括：The oil-degrading Arthrobacter sp. RAG-1 produced an extracellular nondialyzable emulsifying agent when grown on hexadecane, ethanol, or acetate medium. The emulsifier was prepared...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
 - 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。
@@ -34,7 +34,7 @@
 - 年份：2025
 - 作者：Aditi Singh, Abul Ehtesham, Saket Kumar, Tala Talaei Khoei, Vasilakos, Athanasios V.
 - 研究背景：该论文围绕“Agentic Retrieval-Augmented Generation: A Survey on Agentic RAG”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
-- 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
+- 研究问题：论文关注的核心问题可从摘要中概括为：如何在已有方法基础上提升任务效果、系统能力或应用可靠性。
 - 核心方法：根据摘要，论文主要方法包括：Large Language Models (LLMs) have advanced artificial intelligence by enabling human-like text generation and natural language understanding. However, their reliance on static trai...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
 - 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。
@@ -45,7 +45,7 @@
 - 年份：2024
 - 作者：Gihan Gamage, Nishan Mills, Daswin De Silva, Milos Manic, Harsha Moraliyage, Andrew Jennings, Damminda Alahakoon
 - 研究背景：该论文围绕“Multi-Agent RAG Chatbot Architecture for Decision Support in Net-Zero Emission Energy Systems”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
-- 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
+- 研究问题：论文关注的核心问题可从摘要中概括为：如何在已有方法基础上提升任务效果、系统能力或应用可靠性。
 - 核心方法：根据摘要，论文主要方法包括：Modern energy platforms are increasingly leveraging Artificial Intelligence (AI) for effective decision-making and efficient operations. This has led to the development of expansiv...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
 - 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。
@@ -56,7 +56,7 @@
 - 年份：2025
 - 作者：Francesco Blefari, Cristian Cosentino, Francesco Aurelio Pironti, Angelo Furfaro, Fabrizio Marozzo
 - 研究背景：该论文围绕“CyberRAG: An agentic RAG cyber attack classification and reporting tool”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
-- 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
+- 研究问题：论文关注的核心问题可从摘要中概括为：如何在已有方法基础上提升任务效果、系统能力或应用可靠性。
 - 核心方法：根据摘要，论文主要方法包括：Intrusion Detection and Prevention Systems (IDS/IPS) in large enterprises can generate hundreds of thousands of alerts per hour, overwhelming analysts with logs requiring rapidly e...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
 - 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。
@@ -67,7 +67,7 @@
 - 年份：2025
 - 作者：Muhammad Arslan, Saba Munawar, Lamine Mahdjoubi, Patrick Manu
 - 研究背景：该论文围绕“Monitoring indoor environmental conditions in office buildings using a sustainable Agentic RAG-LLM system”展开，摘要显示其研究背景与当前智能系统、信息检索或相关任务的发展需求有关。
-- 研究问题：论文关注的问题可从摘要中概括为：如何在既有方法基础上提升任务效果、系统能力或应用可靠性。
+- 研究问题：论文关注的核心问题可从摘要中概括为：如何在已有方法基础上提升任务效果、系统能力或应用可靠性。
 - 核心方法：根据摘要，论文主要方法包括：• Indoor Environmental Conditions impact health, productivity, and energy use. • Thermal comfort monitoring requires diverse data and intelligent analysis. • BIM integration with r...
 - 主要贡献：该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。
 - 局限性：当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。

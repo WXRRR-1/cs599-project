@@ -51,7 +51,7 @@ def _extract_url(entry: ET.Element) -> str:
 
 
 def _open_url(url: str, timeout: int = 30):
-    request = Request(url, headers={"User-Agent": "ResearchFlow-Agent/0.1"})
+    request = Request(url, headers={"User-Agent": "ResearchFlow-Agent/0.3"})
     if not NETWORK_PROXY:
         return urlopen(request, timeout=timeout)
 

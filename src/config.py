@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "mock").strip().lower()
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "deepseek").strip().lower()
 USE_DEMO_FALLBACK = os.getenv("USE_DEMO_FALLBACK", "true").strip().lower() in {
     "1",
     "true",

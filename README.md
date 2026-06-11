@@ -10,7 +10,7 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 ## 当前版本
 
-v0.2 LangGraph Agent Workflow Demo
+v0.3 Project Hardening Demo
 
 ## 已实现功能
 
@@ -26,6 +26,10 @@ v0.2 LangGraph Agent Workflow Demo
 - 使用 `src/check_apis.py` 检查学术 API 连通性
 - 使用 LangGraph 编排 Planner、Search、Filter、Summary、Report、Evaluator 节点
 - 在 Streamlit 页面展示 Agent 执行日志和评估结果
+- 区分配置的 LLM Provider 与实际使用的 LLM Provider
+- DeepSeek 调用失败时自动回退到 mock 总结
+- 记录最近调研任务历史到 `src/outputs/history.jsonl`
+- 运行 benchmark 主题并生成 `src/outputs/eval_results.md`
 
 ## v0.2 更新
 
@@ -35,6 +39,14 @@ v0.2 LangGraph Agent Workflow Demo
 - 使用 DeepSeek API 作为主 LLM
 - 保留 mock fallback，保证无 API Key 时可演示
 - 在 Streamlit 页面展示 Agent 执行日志和评估结果
+
+## v0.3 更新
+
+- 增加 `get_active_llm_provider()`，展示 DeepSeek / mock / DeepSeek 失败后 mock 兜底的真实状态
+- 增加轻量 benchmark 评估脚本 `src/evaluation/run_evaluation.py`
+- 增加轻量任务历史模块 `src/memory/history_store.py`
+- Streamlit 页面展示实际 LLM、demo fallback 状态、评估结果、执行日志和最近任务历史
+- 改进空主题、top_k 大于候选数量、API 失败和报告保存失败等边界情况的可恢复性
 
 ## 技术栈
 
@@ -59,6 +71,12 @@ cs599-project/
 │   ├── main.py
 │   ├── config.py
 │   ├── check_apis.py
+│   ├── evaluation/
+│   │   ├── benchmark_topics.json
+│   │   ├── metrics.py
+│   │   └── run_evaluation.py
+│   ├── memory/
+│   │   └── history_store.py
 │   ├── workflow/
 │   │   ├── research_state.py
 │   │   ├── nodes.py
@@ -73,7 +91,9 @@ cs599-project/
 │   │   ├── summary_agent.py
 │   │   └── report_agent.py
 │   └── outputs/
-│       └── sample_report.md
+│       ├── sample_report.md
+│       ├── eval_results.md
+│       └── history.jsonl
 ├── README.md
 ├── requirements.txt
 ├── .env.example
@@ -110,13 +130,13 @@ DEEPSEEK_MODEL=deepseek-chat
 
 本项目使用 `openai` Python SDK 的 OpenAI-compatible 写法调用 DeepSeek API。`openai` 只是兼容 SDK，不表示本项目把 OpenAI API 作为主 LLM 方案。
 
-如果没有配置 DeepSeek API Key，保持默认配置即可：
+如果没有配置 DeepSeek API Key，保持默认 DeepSeek 主方案配置即可。系统会在缺少 Key 或 DeepSeek 调用失败时自动回退到 mock 总结：
 
 ```env
-LLM_PROVIDER=mock
+LLM_PROVIDER=deepseek
 ```
 
-mock 模式不需要任何 LLM API Key，也可以跑通完整 Demo。
+mock fallback 不需要任何 LLM API Key，也可以跑通完整 Demo。也可以显式设置 `LLM_PROVIDER=mock` 进行离线演示。
 
 ## 学术 API 与网络配置
 
@@ -168,6 +188,18 @@ streamlit run src/app.py
 python src/check_apis.py
 ```
 
+### Benchmark 评估
+
+```bash
+python src/evaluation/run_evaluation.py
+```
+
+评估脚本会依次运行 `src/evaluation/benchmark_topics.json` 中的主题，并生成：
+
+```text
+src/outputs/eval_results.md
+```
+
 ## LangGraph 工作流
 
 v0.2 使用 LangGraph 显式管理调研状态，核心流程为：
@@ -184,13 +216,32 @@ Planner Node
 
 状态对象定义在 `src/workflow/research_state.py`，节点实现位于 `src/workflow/nodes.py`，图构建与统一入口位于 `src/workflow/research_graph.py`。
 
+## 评估与历史记录
+
+v0.3 增加了轻量级运行观测能力：
+
+- `src/outputs/sample_report.md`：最近一次生成的 Markdown 文献调研报告
+- `src/outputs/eval_results.md`：benchmark 批量评估结果
+- `src/outputs/history.jsonl`：最近调研任务历史，每行记录一个任务
+
+`history.jsonl` 只记录主题、候选论文数、筛选论文数、实际 LLM Provider、评估状态、报告路径和错误类型，不记录 API Key。
+
 ## 项目状态
 
 - [x] Proposal
 - [x] v0.1 Demo
 - [x] v0.2 LangGraph Workflow
+- [x] v0.3 Project Hardening
 - [ ] MVP
 - [ ] Final
+
+## 当前尚未实现
+
+- MCP 协议接入
+- OpenAI / DeepSeek Function Calling
+- 向量数据库或长期语义记忆
+- 论文 PDF 全文 RAG
+- Docker 或云部署
 
 ## 安全说明
 
@@ -198,7 +249,7 @@ Planner Node
 - `.env` 文件不得上传 GitHub
 - `.env.example` 只保留环境变量名称和示例配置
 - 程序日志不得输出真实 API Key
-- 本项目默认使用 mock 模式，避免没有 LLM API Key 时无法运行
+- 本项目默认以 DeepSeek API 为主方案，缺少 API Key 或调用失败时自动回退到 mock
 
 ## References
 
