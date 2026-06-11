@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from config import LLM_PROVIDER, USE_DEMO_FALLBACK
+from config import LLM_DRY_RUN, LLM_PROVIDER, USE_DEMO_FALLBACK
 from main import run_research
 from memory.history_store import load_recent_history
 
@@ -14,15 +14,18 @@ st.set_page_config(page_title="ResearchFlow-Agent", layout="wide")
 st.title("ResearchFlow-Agent")
 st.write("面向研究生的自动化文献调研与报告生成智能体")
 
-status_col1, status_col2, status_col3 = st.columns(3)
+status_col1, status_col2, status_col3, status_col4 = st.columns(4)
 status_col1.info(f"配置 LLM Provider: {LLM_PROVIDER}")
-status_col2.info("Mock summary fallback: 已启用")
-status_col3.info(f"Demo paper fallback: {'已启用' if USE_DEMO_FALLBACK else '未启用'}")
+status_col2.info(f"LLM_DRY_RUN: {'true' if LLM_DRY_RUN else 'false'}")
+status_col3.info("Mock summary fallback: 已启用")
+status_col4.info(f"Demo paper fallback: {'已启用' if USE_DEMO_FALLBACK else '未启用'}")
 
 if LLM_PROVIDER == "deepseek":
     st.success("当前配置为 DeepSeek API。若调用失败，系统会自动回退到 mock 总结。")
 else:
     st.warning("当前配置为 mock 模式，不需要 LLM API Key，也可以跑通完整 Demo。")
+if LLM_DRY_RUN:
+    st.warning("LLM_DRY_RUN=true：当前不会真实调用 DeepSeek，可避免开发阶段产生 LLM 调用费用。")
 
 topic = st.text_input("研究主题", value="Agentic RAG")
 
@@ -45,6 +48,7 @@ if st.button("开始调研", type="primary"):
     candidate_papers = result.get("candidate_papers", []) or []
     selected_papers = result.get("selected_papers", []) or []
     evaluation = result.get("evaluation", {}) or {}
+    cache_info = result.get("cache_info", {}) or {}
     logs = result.get("logs", []) or []
     errors = result.get("errors", []) or []
     report = result.get("report", "") or ""
@@ -55,6 +59,11 @@ if st.button("开始调研", type="primary"):
     metric_col3.metric("Evaluation", evaluation.get("status", "unknown"))
     metric_col4.metric("实际 LLM", evaluation.get("llm_provider", "unknown"))
 
+    cache_col1, cache_col2, cache_col3 = st.columns(3)
+    cache_col1.metric("Search Cache", "hit" if cache_info.get("search_cache_hit") else "miss")
+    cache_col2.metric("Summary Cache Hit", cache_info.get("summary_cache_hits", 0))
+    cache_col3.metric("Summary Cache Miss", cache_info.get("summary_cache_misses", 0))
+
     if selected_papers:
         st.subheader("筛选后论文")
         table_rows = [
@@ -63,7 +72,11 @@ if st.button("开始调研", type="primary"):
                 "year": paper.get("year", ""),
                 "authors": paper.get("authors", ""),
                 "citationCount": paper.get("citationCount", 0),
+                "relevance_score": paper.get("relevance_score", 0),
+                "score_breakdown": paper.get("score_breakdown", {}),
+                "score_reason": paper.get("score_reason", ""),
                 "venue": paper.get("venue", ""),
+                "source": paper.get("source", ""),
                 "url": paper.get("url", ""),
             }
             for paper in selected_papers

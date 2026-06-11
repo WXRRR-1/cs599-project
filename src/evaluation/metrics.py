@@ -37,7 +37,8 @@ def evaluate_research_result(topic: str, result: dict, runtime_seconds: float) -
         "has_references": has_references,
         "has_comparison_table": has_comparison_table,
         "llm_provider": llm_provider,
-        "fallback_used": llm_provider in {"mock", "deepseek_failed_fallback_mock"},
+        "fallback_used": llm_provider
+        in {"mock", "deepseek_dry_run_mock", "deepseek_failed_fallback_mock"},
         "has_errors": has_errors,
         "runtime_seconds": round(runtime_seconds, 2),
         "status": status,

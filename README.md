@@ -18,7 +18,7 @@ v0.3 Project Hardening Demo
 - 优先调用 OpenAlex API 检索相关论文
 - OpenAlex 不可用时自动切换到 arXiv API
 - 获取论文标题、作者、年份、摘要、引用量、链接和 venue
-- 按引用量和年份筛选代表性论文
+- 使用关键词、年份、引用量的可解释评分筛选代表性论文
 - 使用 DeepSeek API 或 Mock Mode 生成中文结构化总结
 - 生成 Markdown 格式文献调研报告
 - 使用 Streamlit 展示结果并支持下载
@@ -28,6 +28,8 @@ v0.3 Project Hardening Demo
 - 在 Streamlit 页面展示 Agent 执行日志和评估结果
 - 区分配置的 LLM Provider 与实际使用的 LLM Provider
 - DeepSeek 调用失败时自动回退到 mock 总结
+- 默认启用 `LLM_DRY_RUN=true`，避免开发阶段误调用 DeepSeek 产生费用
+- 使用本地 JSON 缓存减少重复 OpenAlex / arXiv 检索和重复论文总结
 - 记录最近调研任务历史到 `src/outputs/history.jsonl`
 - 运行 benchmark 主题并生成 `src/outputs/eval_results.md`
 
@@ -47,6 +49,9 @@ v0.3 Project Hardening Demo
 - 增加轻量任务历史模块 `src/memory/history_store.py`
 - Streamlit 页面展示实际 LLM、demo fallback 状态、评估结果、执行日志和最近任务历史
 - 改进空主题、top_k 大于候选数量、API 失败和报告保存失败等边界情况的可恢复性
+- 增加 DeepSeek 成本保护：dry-run、最大总结论文数、摘要截断、超时和重试限制
+- 增加 search cache 与 summary cache，减少重复 API 调用
+- 增强论文筛选可信度，输出 `relevance_score`、`score_breakdown`、`score_reason`
 
 ## 技术栈
 
@@ -71,6 +76,8 @@ cs599-project/
 │   ├── main.py
 │   ├── config.py
 │   ├── check_apis.py
+│   ├── cache/
+│   │   └── cache_store.py
 │   ├── evaluation/
 │   │   ├── benchmark_topics.json
 │   │   ├── metrics.py
@@ -93,7 +100,10 @@ cs599-project/
 │   └── outputs/
 │       ├── sample_report.md
 │       ├── eval_results.md
-│       └── history.jsonl
+│       ├── history.jsonl
+│       └── cache/
+│           ├── search_cache.json
+│           └── summary_cache.json
 ├── README.md
 ├── requirements.txt
 ├── .env.example
@@ -123,6 +133,11 @@ copy .env.example .env
 
 ```env
 LLM_PROVIDER=deepseek
+LLM_DRY_RUN=true
+MAX_LLM_PAPERS=5
+MAX_ABSTRACT_CHARS=2000
+LLM_TIMEOUT_SECONDS=30
+LLM_MAX_RETRIES=1
 DEEPSEEK_API_KEY=你的 DeepSeek API Key
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-chat
@@ -137,6 +152,17 @@ LLM_PROVIDER=deepseek
 ```
 
 mock fallback 不需要任何 LLM API Key，也可以跑通完整 Demo。也可以显式设置 `LLM_PROVIDER=mock` 进行离线演示。
+
+## DeepSeek 成本保护
+
+默认配置中 `LLM_DRY_RUN=true`，即使 `LLM_PROVIDER=deepseek`，系统也不会真实调用 DeepSeek，而是使用 mock summary 跑通流程。只有在 `LLM_DRY_RUN=false` 且 `DEEPSEEK_API_KEY` 存在时，才会尝试真实调用 DeepSeek。
+
+- `MAX_LLM_PAPERS`：每次最多允许多少篇论文进入真实 LLM 总结
+- `MAX_ABSTRACT_CHARS`：发送给 LLM 的摘要最大字符数
+- `LLM_TIMEOUT_SECONDS`：DeepSeek 请求超时时间
+- `LLM_MAX_RETRIES`：DeepSeek 调用失败后的最大重试次数
+
+程序日志只显示 dry-run、fallback 和错误类型，不输出 API Key 或请求头。
 
 ## 学术 API 与网络配置
 
@@ -225,6 +251,29 @@ v0.3 增加了轻量级运行观测能力：
 - `src/outputs/history.jsonl`：最近调研任务历史，每行记录一个任务
 
 `history.jsonl` 只记录主题、候选论文数、筛选论文数、实际 LLM Provider、评估状态、报告路径和错误类型，不记录 API Key。
+
+## 缓存与筛选评分
+
+v0.3 使用本地 JSON 文件减少重复调用：
+
+- `src/outputs/cache/search_cache.json`：缓存 OpenAlex / arXiv 检索结果
+- `src/outputs/cache/summary_cache.json`：缓存论文结构化总结
+
+缓存 key 基于 topic、limit、source、论文标题、链接和年份等非敏感信息生成，不保存 API Key。
+
+论文筛选使用可解释评分公式：
+
+```text
+relevance_score = 关键词匹配分 + 年份分 + 引用量分
+```
+
+筛选后的论文会包含：
+
+- `relevance_score`：综合相关性分数
+- `score_breakdown`：关键词、年份、引用量三部分分数
+- `score_reason`：自然语言评分原因
+
+这些字段会在 Streamlit 的筛选后论文表格中展示。
 
 ## 项目状态
 

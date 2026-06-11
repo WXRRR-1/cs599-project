@@ -8,8 +8,17 @@ from __future__ import annotations
 
 import requests
 
+from cache.cache_store import get_cached_value, make_cache_key, set_cached_value
 from config import OPENALEX_BASE_URL, OPENALEX_EMAIL
 from tools.http_client import describe_request_error, get_request_proxies
+
+
+_LAST_CACHE_HIT = False
+
+
+def get_last_openalex_cache_hit() -> bool:
+    """Return whether the latest OpenAlex search was served from cache."""
+    return _LAST_CACHE_HIT
 
 
 def _restore_abstract(inverted_index: dict | None) -> str:
@@ -61,13 +70,23 @@ def _extract_venue(work: dict) -> str:
 
 def search_openalex_papers(query: str, limit: int = 10) -> list[dict]:
     """Search papers from OpenAlex and return normalized paper records."""
+    global _LAST_CACHE_HIT
+    _LAST_CACHE_HIT = False
+
     if not query.strip():
         print("请输入有效的 OpenAlex 检索主题。")
         return []
 
+    normalized_limit = max(1, min(limit, 100))
+    cache_key = make_cache_key("openalex", query.strip().lower(), normalized_limit)
+    cached = get_cached_value("search", cache_key)
+    if isinstance(cached, list):
+        _LAST_CACHE_HIT = True
+        return cached
+
     params = {
         "search": query,
-        "per_page": max(1, min(limit, 100)),
+        "per_page": normalized_limit,
         "sort": "relevance_score:desc",
         "select": ",".join(
             [
@@ -119,7 +138,11 @@ def search_openalex_papers(query: str, limit: int = 10) -> list[dict]:
                 "citationCount": work.get("cited_by_count") or 0,
                 "url": _extract_url(work),
                 "venue": _extract_venue(work),
+                "source": "OpenAlex",
             }
         )
+
+    if papers:
+        set_cached_value("search", cache_key, papers)
 
     return papers

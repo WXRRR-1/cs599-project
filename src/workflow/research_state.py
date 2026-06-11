@@ -18,6 +18,7 @@ class ResearchState(TypedDict, total=False):
     report: str
     report_path: str
     evaluation: Dict[str, Any]
+    cache_info: Dict[str, Any]
     logs: List[str]
     errors: List[str]
     search_source: str

@@ -12,10 +12,17 @@ from urllib.parse import urlencode
 from urllib.request import ProxyHandler, Request, build_opener, urlopen
 import xml.etree.ElementTree as ET
 
+from cache.cache_store import get_cached_value, make_cache_key, set_cached_value
 from config import ARXIV_BASE_URL, NETWORK_PROXY
 
 
 ARXIV_NS = {"atom": "http://www.w3.org/2005/Atom"}
+_LAST_CACHE_HIT = False
+
+
+def get_last_arxiv_cache_hit() -> bool:
+    """Return whether the latest arXiv search was served from cache."""
+    return _LAST_CACHE_HIT
 
 
 def _find_text(entry: ET.Element, tag: str) -> str:
@@ -68,14 +75,24 @@ def _open_url(url: str, timeout: int = 30):
 
 def search_arxiv_papers(query: str, limit: int = 10) -> list[dict]:
     """Search papers from arXiv and return normalized paper records."""
+    global _LAST_CACHE_HIT
+    _LAST_CACHE_HIT = False
+
     if not query.strip():
         print("请输入有效的 arXiv 检索主题。")
         return []
 
+    normalized_limit = max(1, min(limit, 50))
+    cache_key = make_cache_key("arxiv", query.strip().lower(), normalized_limit)
+    cached = get_cached_value("search", cache_key)
+    if isinstance(cached, list):
+        _LAST_CACHE_HIT = True
+        return cached
+
     params = {
         "search_query": f"all:{query}",
         "start": 0,
-        "max_results": max(1, min(limit, 50)),
+        "max_results": normalized_limit,
         "sortBy": "relevance",
         "sortOrder": "descending",
     }
@@ -111,7 +128,11 @@ def search_arxiv_papers(query: str, limit: int = 10) -> list[dict]:
                 "citationCount": 0,
                 "url": _extract_url(entry),
                 "venue": "arXiv",
+                "source": "arXiv",
             }
         )
+
+    if papers:
+        set_cached_value("search", cache_key, papers)
 
     return papers

@@ -4,20 +4,42 @@ from __future__ import annotations
 
 import json
 
+from cache.cache_store import get_cached_value, make_cache_key, set_cached_value
 from config import (
     DEEPSEEK_API_KEY,
     DEEPSEEK_BASE_URL,
     DEEPSEEK_MODEL,
+    LLM_DRY_RUN,
+    LLM_MAX_RETRIES,
     LLM_PROVIDER,
+    LLM_TIMEOUT_SECONDS,
+    MAX_ABSTRACT_CHARS,
+    MAX_LLM_PAPERS,
 )
 
 
 _ACTIVE_LLM_PROVIDER = "mock"
+_SUMMARY_CACHE_HITS = 0
+_SUMMARY_CACHE_MISSES = 0
 
 
 def get_active_llm_provider() -> str:
     """Return the provider that was actually used by the latest summary run."""
     return _ACTIVE_LLM_PROVIDER
+
+
+def get_summary_cache_stats() -> dict:
+    """Return cache hit/miss counts for the latest batch summary run."""
+    return {
+        "summary_cache_hits": _SUMMARY_CACHE_HITS,
+        "summary_cache_misses": _SUMMARY_CACHE_MISSES,
+    }
+
+
+def _reset_summary_cache_stats() -> None:
+    global _SUMMARY_CACHE_HITS, _SUMMARY_CACHE_MISSES
+    _SUMMARY_CACHE_HITS = 0
+    _SUMMARY_CACHE_MISSES = 0
 
 
 def _set_active_llm_provider(provider: str) -> None:
@@ -28,6 +50,11 @@ def _set_active_llm_provider(provider: str) -> None:
 def _short_text(text: str, max_len: int = 180) -> str:
     text = " ".join((text or "").split())
     return text[:max_len] + ("..." if len(text) > max_len else "")
+
+
+def _limited_abstract(paper: dict) -> str:
+    abstract = " ".join((paper.get("abstract", "") or "").split())
+    return abstract[:MAX_ABSTRACT_CHARS]
 
 
 def _mock_summary(paper: dict) -> dict:
@@ -61,7 +88,7 @@ JSON 字段：title, year, authors, background, problem, method, contribution, l
 作者：{paper.get("authors", "")}
 年份：{paper.get("year", "")}
 链接：{paper.get("url", "")}
-摘要：{paper.get("abstract", "")}
+摘要：{_limited_abstract(paper)}
 """.strip()
 
 
@@ -75,6 +102,38 @@ def _parse_llm_json(content: str) -> dict:
     return json.loads(text)
 
 
+def _summary_cache_key(paper: dict, provider_mode: str) -> str:
+    return make_cache_key(
+        "summary",
+        provider_mode,
+        paper.get("title", ""),
+        paper.get("url", ""),
+        paper.get("year", ""),
+    )
+
+
+def _get_cached_summary(paper: dict, provider_mode: str) -> dict | None:
+    global _SUMMARY_CACHE_HITS, _SUMMARY_CACHE_MISSES
+
+    cached = get_cached_value("summary", _summary_cache_key(paper, provider_mode))
+    if isinstance(cached, dict):
+        _SUMMARY_CACHE_HITS += 1
+        summary = cached.get("summary") if isinstance(cached.get("summary"), dict) else cached
+        _set_active_llm_provider(cached.get("provider", provider_mode))
+        return summary
+
+    _SUMMARY_CACHE_MISSES += 1
+    return None
+
+
+def _set_cached_summary(paper: dict, provider_mode: str, summary: dict) -> None:
+    set_cached_value(
+        "summary",
+        _summary_cache_key(paper, provider_mode),
+        {"provider": provider_mode, "summary": summary},
+    )
+
+
 def _call_deepseek(paper: dict) -> dict:
     """Call DeepSeek through the OpenAI-compatible SDK and parse JSON result."""
     from openai import OpenAI
@@ -85,52 +144,91 @@ def _call_deepseek(paper: dict) -> dict:
     client = OpenAI(
         api_key=DEEPSEEK_API_KEY,
         base_url=DEEPSEEK_BASE_URL,
-        timeout=30,
+        timeout=LLM_TIMEOUT_SECONDS,
     )
 
-    response = client.chat.completions.create(
-        model=DEEPSEEK_MODEL,
-        messages=[
-            {"role": "system", "content": "你是严谨的中文学术文献总结助手。"},
-            {"role": "user", "content": _build_prompt(paper)},
-        ],
-        temperature=0.2,
-        response_format={"type": "json_object"},
-    )
-    content = response.choices[0].message.content or "{}"
-    summary = _parse_llm_json(content)
+    last_error: Exception | None = None
+    for _ in range(LLM_MAX_RETRIES + 1):
+        try:
+            response = client.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=[
+                    {"role": "system", "content": "你是严谨的中文学术文献总结助手。"},
+                    {"role": "user", "content": _build_prompt(paper)},
+                ],
+                temperature=0.2,
+                response_format={"type": "json_object"},
+            )
+            content = response.choices[0].message.content or "{}"
+            summary = _parse_llm_json(content)
 
-    fallback = _mock_summary(paper)
-    fallback.update({key: summary.get(key) or fallback[key] for key in fallback})
-    return fallback
+            fallback = _mock_summary(paper)
+            fallback.update({key: summary.get(key) or fallback[key] for key in fallback})
+            return fallback
+        except Exception as exc:
+            last_error = exc
+
+    raise last_error or RuntimeError("DeepSeek 调用失败")
 
 
-def summarize_paper(paper: dict) -> dict:
-    """Summarize one paper with configured LLM provider or mock fallback."""
+def _provider_mode(allow_llm_call: bool = True) -> str:
     provider = (LLM_PROVIDER or "mock").strip().lower()
     if provider == "mock":
-        _set_active_llm_provider("mock")
-        return _mock_summary(paper)
+        return "mock"
+    if provider != "deepseek":
+        return "mock"
+    if LLM_DRY_RUN:
+        return "deepseek_dry_run_mock"
+    if not DEEPSEEK_API_KEY:
+        return "deepseek_failed_fallback_mock"
+    if not allow_llm_call:
+        return "mock"
+    return "deepseek"
+
+
+def summarize_paper(paper: dict, allow_llm_call: bool = True) -> dict:
+    """Summarize one paper with configured LLM provider or mock fallback."""
+    mode = _provider_mode(allow_llm_call=allow_llm_call)
+    cached = _get_cached_summary(paper, mode)
+    if cached:
+        return cached
+
+    if mode != "deepseek":
+        _set_active_llm_provider(mode)
+        summary = _mock_summary(paper)
+        _set_cached_summary(paper, mode, summary)
+        return summary
 
     try:
-        if provider != "deepseek":
-            raise ValueError(f"不支持的 LLM_PROVIDER：{provider}")
         summary = _call_deepseek(paper)
         _set_active_llm_provider("deepseek")
+        _set_cached_summary(paper, "deepseek", summary)
         return summary
     except Exception as exc:
-        _set_active_llm_provider("deepseek_failed_fallback_mock")
+        mode = "deepseek_failed_fallback_mock"
+        _set_active_llm_provider(mode)
         print(f"DeepSeek 总结失败，已回退到 mock 模式：{exc.__class__.__name__}")
-        return _mock_summary(paper)
+        summary = _mock_summary(paper)
+        _set_cached_summary(paper, mode, summary)
+        return summary
 
 
 def summarize_papers(papers: list[dict]) -> list[dict]:
-    """Summarize a list of papers."""
+    """Summarize a list of papers with cache and cost protection."""
+    _reset_summary_cache_stats()
     if not papers:
-        _set_active_llm_provider("mock" if LLM_PROVIDER == "mock" else LLM_PROVIDER)
+        _set_active_llm_provider("mock" if LLM_PROVIDER == "mock" else _provider_mode())
         return []
-    if LLM_PROVIDER == "deepseek" and not DEEPSEEK_API_KEY:
+
+    if LLM_PROVIDER == "deepseek" and LLM_DRY_RUN:
+        _set_active_llm_provider("deepseek_dry_run_mock")
+        print("LLM_DRY_RUN=true，本次不会真实调用 DeepSeek，已使用 mock 模式总结。")
+    elif LLM_PROVIDER == "deepseek" and not DEEPSEEK_API_KEY:
         _set_active_llm_provider("deepseek_failed_fallback_mock")
         print("DeepSeek API Key 未配置，已使用 mock 模式完成本次批量总结。")
-        return [_mock_summary(paper) for paper in papers]
-    return [summarize_paper(paper) for paper in papers]
+
+    summaries = []
+    for index, paper in enumerate(papers):
+        allow_llm_call = index < MAX_LLM_PAPERS
+        summaries.append(summarize_paper(paper, allow_llm_call=allow_llm_call))
+    return summaries

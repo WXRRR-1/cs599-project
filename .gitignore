@@ -9,3 +9,4 @@ __pycache__/
 *.log
 src/outputs/*.tmp
 src/outputs/*.log
+src/outputs/cache/
