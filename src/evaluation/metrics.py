@@ -14,7 +14,10 @@ def evaluate_research_result(topic: str, result: dict, runtime_seconds: float) -
 
     report_generated = bool(report.strip())
     has_references = "## 7. 参考文献" in report and "暂无参考文献" not in report
-    has_comparison_table = "| 论文 | 年份 | 核心方法 | 主要贡献 | 局限性 |" in report
+    has_comparison_table = (
+        "| 论文 | 年份 | 核心方法 | 主要贡献 | 局限性 |" in report
+        or "| 论文 | 年份 | 来源 | 相关性评分 | 核心方法 | 主要贡献 | 局限性 |" in report
+    )
     has_errors = bool(errors) or bool(evaluation.get("has_errors"))
 
     status = (

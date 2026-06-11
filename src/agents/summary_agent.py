@@ -61,7 +61,8 @@ def _mock_summary(paper: dict) -> dict:
     """Generate a deterministic Chinese summary when no LLM key is available."""
     abstract = _short_text(paper.get("abstract", ""))
     title = paper.get("title") or "未知论文"
-    return {
+    return _attach_paper_metadata(
+        {
         "title": title,
         "year": paper.get("year", "N/A"),
         "authors": paper.get("authors", "N/A"),
@@ -71,7 +72,18 @@ def _mock_summary(paper: dict) -> dict:
         "contribution": "该论文的主要贡献在于提出或验证了一种面向具体研究问题的技术方案，并提供了实验或分析依据。",
         "limitation": "当前 mock 模式仅基于标题和摘要生成概括；如果摘要信息有限，无法判断更具体的局限性。",
         "url": paper.get("url", ""),
-    }
+        },
+        paper,
+    )
+
+
+def _attach_paper_metadata(summary: dict, paper: dict) -> dict:
+    """Preserve filter metadata so report generation can explain selection."""
+    enriched = dict(summary)
+    for key in ("source", "relevance_score", "score_breakdown", "score_reason"):
+        if key in paper and key not in enriched:
+            enriched[key] = paper.get(key)
+    return enriched
 
 
 def _build_prompt(paper: dict) -> str:
@@ -120,7 +132,7 @@ def _get_cached_summary(paper: dict, provider_mode: str) -> dict | None:
         _SUMMARY_CACHE_HITS += 1
         summary = cached.get("summary") if isinstance(cached.get("summary"), dict) else cached
         _set_active_llm_provider(cached.get("provider", provider_mode))
-        return summary
+        return _attach_paper_metadata(summary, paper)
 
     _SUMMARY_CACHE_MISSES += 1
     return None
@@ -164,7 +176,7 @@ def _call_deepseek(paper: dict) -> dict:
 
             fallback = _mock_summary(paper)
             fallback.update({key: summary.get(key) or fallback[key] for key in fallback})
-            return fallback
+            return _attach_paper_metadata(fallback, paper)
         except Exception as exc:
             last_error = exc
 

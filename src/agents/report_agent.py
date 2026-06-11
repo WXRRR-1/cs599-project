@@ -11,6 +11,21 @@ def _md_escape_table(text: str) -> str:
     return str(text or "").replace("|", "\\|").replace("\n", " ")
 
 
+def _format_score_breakdown(summary: dict) -> str:
+    breakdown = summary.get("score_breakdown") or {}
+    if not isinstance(breakdown, dict) or not breakdown:
+        return "- 评分构成：暂无评分信息"
+
+    return "\n".join(
+        [
+            "- 评分构成（score_breakdown）：",
+            f"  - keyword_score: {breakdown.get('keyword_score', 'N/A')}",
+            f"  - year_score: {breakdown.get('year_score', 'N/A')}",
+            f"  - citation_score: {breakdown.get('citation_score', 'N/A')}",
+        ]
+    )
+
+
 def generate_report(topic: str, summaries: list[dict]) -> str:
     """Generate a Chinese Markdown literature review report."""
     paper_lines = []
@@ -23,13 +38,22 @@ def generate_report(topic: str, summaries: list[dict]) -> str:
         year = summary.get("year", "N/A")
         authors = summary.get("authors", "N/A")
         url = summary.get("url", "")
+        source = summary.get("source", "暂无来源信息")
+        relevance_score = summary.get("relevance_score", "暂无评分信息")
+        score_reason = summary.get("score_reason", "暂无评分解释")
 
-        paper_lines.append(f"{index}. **{title}**（{year}）- {authors}")
+        paper_lines.append(
+            f"{index}. **{title}**（{year}）- {authors}；来源：{source}；相关性评分：{relevance_score}"
+        )
         detail_sections.append(
             f"""### 论文 {index}：{title}
 
 - 年份：{year}
 - 作者：{authors}
+- 来源：{source}
+- 相关性评分（relevance_score）：{relevance_score}
+{_format_score_breakdown(summary)}
+- 筛选理由（score_reason）：{score_reason}
 - 研究背景：{summary.get("background", "摘要中未明确说明")}
 - 研究问题：{summary.get("problem", "摘要中未明确说明")}
 - 核心方法：{summary.get("method", "摘要中未明确说明")}
@@ -39,9 +63,11 @@ def generate_report(topic: str, summaries: list[dict]) -> str:
 """
         )
         table_rows.append(
-            "| {title} | {year} | {method} | {contribution} | {limitation} |".format(
+            "| {title} | {year} | {source} | {score} | {method} | {contribution} | {limitation} |".format(
                 title=_md_escape_table(title),
                 year=_md_escape_table(year),
+                source=_md_escape_table(source),
+                score=_md_escape_table(relevance_score),
                 method=_md_escape_table(summary.get("method", "")),
                 contribution=_md_escape_table(summary.get("contribution", "")),
                 limitation=_md_escape_table(summary.get("limitation", "")),
@@ -60,7 +86,21 @@ def generate_report(topic: str, summaries: list[dict]) -> str:
 
 ## 2. 检索与筛选说明
 
-系统优先使用 OpenAlex API 检索相关论文，失败后切换到 arXiv API，并过滤掉缺少标题或摘要的结果。当前版本使用简单规则进行筛选：优先选择引用量较高、年份较新的论文。随后基于论文标题和摘要生成中文结构化总结。
+本项目首先根据用户输入的研究主题调用 OpenAlex / arXiv 等学术检索工具获取候选论文，失败时可使用内置示例论文保持 Demo 可运行。系统会过滤掉缺少标题或摘要的结果，然后使用轻量级规则评分方法筛选代表性论文。
+
+论文筛选评分公式如下：
+
+```text
+relevance_score = keyword_score + year_score + citation_score
+```
+
+其中：
+
+- `keyword_score`：根据研究主题关键词在论文标题和摘要中的命中情况计算；
+- `year_score`：根据论文发表年份的新近程度计算；
+- `citation_score`：根据论文引用量区间计算。
+
+系统最终按照 `relevance_score` 从高到低排序，并选择排名靠前的论文作为代表性文献。随后基于论文标题和摘要生成中文结构化总结。
 
 ## 3. 代表性论文列表
 
@@ -72,9 +112,9 @@ def generate_report(topic: str, summaries: list[dict]) -> str:
 
 ## 5. 文献对比表
 
-| 论文 | 年份 | 核心方法 | 主要贡献 | 局限性 |
-|---|---:|---|---|---|
-{chr(10).join(table_rows) if summaries else "| 暂无 | N/A | N/A | N/A | N/A |"}
+| 论文 | 年份 | 来源 | 相关性评分 | 核心方法 | 主要贡献 | 局限性 |
+|---|---:|---|---:|---|---|---|
+{chr(10).join(table_rows) if summaries else "| 暂无 | N/A | N/A | N/A | N/A | N/A | N/A |"}
 
 ## 6. 初步结论
 
