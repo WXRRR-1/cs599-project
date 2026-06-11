@@ -10,7 +10,7 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 ## 当前版本
 
-v0.1 Demo
+v0.2 LangGraph Agent Workflow Demo
 
 ## 已实现功能
 
@@ -24,12 +24,24 @@ v0.1 Demo
 - 使用 Streamlit 展示结果并支持下载
 - 将报告保存到 `src/outputs/sample_report.md`
 - 使用 `src/check_apis.py` 检查学术 API 连通性
+- 使用 LangGraph 编排 Planner、Search、Filter、Summary、Report、Evaluator 节点
+- 在 Streamlit 页面展示 Agent 执行日志和评估结果
+
+## v0.2 更新
+
+- 引入 LangGraph 工作流
+- 增加 `ResearchState` 状态对象
+- 将调研任务拆分为 Planner、Search、Filter、Summary、Report、Evaluator 节点
+- 使用 DeepSeek API 作为主 LLM
+- 保留 mock fallback，保证无 API Key 时可演示
+- 在 Streamlit 页面展示 Agent 执行日志和评估结果
 
 ## 技术栈
 
 - AI Development Tool: OpenAI Codex
 - Language: Python
 - UI: Streamlit
+- Agent Workflow: LangGraph
 - Paper Search: OpenAlex API, arXiv API
 - LLM: DeepSeek API / Mock Mode
 - LLM SDK: OpenAI-compatible SDK
@@ -47,6 +59,10 @@ cs599-project/
 │   ├── main.py
 │   ├── config.py
 │   ├── check_apis.py
+│   ├── workflow/
+│   │   ├── research_state.py
+│   │   ├── nodes.py
+│   │   └── research_graph.py
 │   ├── tools/
 │   │   ├── openalex_search_tool.py
 │   │   ├── arxiv_search_tool.py
@@ -152,10 +168,27 @@ streamlit run src/app.py
 python src/check_apis.py
 ```
 
+## LangGraph 工作流
+
+v0.2 使用 LangGraph 显式管理调研状态，核心流程为：
+
+```text
+Planner Node
+→ Search Node
+→ Filter Node
+→ Summary Node
+→ Report Node
+→ Evaluator Node
+→ END
+```
+
+状态对象定义在 `src/workflow/research_state.py`，节点实现位于 `src/workflow/nodes.py`，图构建与统一入口位于 `src/workflow/research_graph.py`。
+
 ## 项目状态
 
 - [x] Proposal
 - [x] v0.1 Demo
+- [x] v0.2 LangGraph Workflow
 - [ ] MVP
 - [ ] Final
 

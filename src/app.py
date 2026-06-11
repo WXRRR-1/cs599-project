@@ -31,10 +31,51 @@ if st.button("开始调研", type="primary"):
     if not topic.strip():
         st.warning("请输入研究主题。")
     else:
-        with st.status("正在检索论文、筛选结果并生成报告...", expanded=True) as status:
-            st.write("正在调用 OpenAlex API 检索论文")
-            report = run_research(topic.strip(), limit=int(limit), top_k=int(top_k))
+        with st.status("LangGraph Agent 正在执行调研工作流...", expanded=True) as status:
+            st.write("Planner → Search → Filter → Summary → Report → Evaluator")
+            result = run_research(topic.strip(), limit=int(limit), top_k=int(top_k))
             status.update(label="调研报告已生成", state="complete")
+
+        candidate_papers = result.get("candidate_papers", [])
+        selected_papers = result.get("selected_papers", [])
+        evaluation = result.get("evaluation", {})
+        logs = result.get("logs", [])
+        errors = result.get("errors", [])
+        report = result.get("report", "")
+
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        metric_col1.metric("候选论文数量", len(candidate_papers))
+        metric_col2.metric("筛选后论文数量", len(selected_papers))
+        metric_col3.metric("Evaluation", evaluation.get("status", "unknown"))
+
+        if selected_papers:
+            st.subheader("筛选后论文")
+            table_rows = [
+                {
+                    "title": paper.get("title", ""),
+                    "year": paper.get("year", ""),
+                    "authors": paper.get("authors", ""),
+                    "citationCount": paper.get("citationCount", 0),
+                    "venue": paper.get("venue", ""),
+                    "url": paper.get("url", ""),
+                }
+                for paper in selected_papers
+            ]
+            st.dataframe(table_rows, use_container_width=True)
+
+        if logs:
+            with st.expander("Agent 执行日志", expanded=True):
+                for log in logs:
+                    st.write(f"- {log}")
+
+        if evaluation:
+            with st.expander("Evaluation 结果", expanded=True):
+                st.json(evaluation)
+
+        if errors:
+            st.warning("工作流执行过程中出现可恢复问题：")
+            for error in errors:
+                st.write(f"- {error}")
 
         st.subheader("生成的 Markdown 报告")
         st.markdown(report)
@@ -46,4 +87,4 @@ if st.button("开始调研", type="primary"):
         )
 
 st.divider()
-st.caption("当前为 v0.1 Demo；优先使用 OpenAlex API 检索论文，失败后切换到 arXiv API；如果仍无结果，会使用内置示例论文展示完整流程；使用 LLM 或 mock 模式生成总结。")
+st.caption("当前为 v0.2 Demo；使用 LangGraph 编排 Planner、Search、Filter、Summary、Report、Evaluator 节点；LLM 使用 DeepSeek API 或 mock 模式。")
