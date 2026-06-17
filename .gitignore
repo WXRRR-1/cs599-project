@@ -10,4 +10,6 @@ __pycache__/
 src/outputs/*.tmp
 src/outputs/*.log
 src/outputs/history.jsonl
+src/outputs/latest_report.md
+src/outputs/reports/
 src/outputs/cache/

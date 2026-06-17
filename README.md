@@ -10,7 +10,7 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 ## 当前版本
 
-v0.3.2 Report Scoring Polish
+v0.3.4 Output Report Separation
 
 ## 已实现功能
 
@@ -22,7 +22,7 @@ v0.3.2 Report Scoring Polish
 - 使用 DeepSeek API 或 Mock Mode 生成中文结构化总结
 - 生成 Markdown 格式文献调研报告
 - 使用 Streamlit 展示结果并支持下载
-- 将报告保存到 `src/outputs/sample_report.md`
+- 将最近一次运行报告保存到 `src/outputs/latest_report.md`
 - 使用 `src/check_apis.py` 检查学术 API 连通性
 - 使用 LangGraph 编排 Planner、Search、Filter、Summary、Report、Evaluator 节点
 - 在 Streamlit 页面展示 Agent 执行日志和评估结果
@@ -61,6 +61,19 @@ v0.3.2 Report Scoring Polish
 - 同步文献调研报告中的筛选评分说明
 - 在 `sample_report.md` 中展示 `relevance_score`、`score_breakdown`、`score_reason`
 - 更新文献对比表，增加来源和相关性评分字段
+
+## v0.3.3 更新
+
+- 同步 README 和 Streamlit 页面版本标签
+- 将 `history.jsonl` 作为本地运行历史文件处理，默认不提交到 GitHub
+- 保持 `sample_report.md` 作为课程展示样例
+
+## v0.3.4 更新
+
+- `src/outputs/sample_report.md` 作为人工确认过的稳定展示样例
+- `src/outputs/latest_report.md` 作为最近一次运行自动生成的报告
+- `src/outputs/reports/` 作为可选历史归档目录
+- 普通运行和 benchmark 不再覆盖 `sample_report.md`
 
 ## 技术栈
 
@@ -108,6 +121,8 @@ cs599-project/
 │   │   └── report_agent.py
 │   └── outputs/
 │       ├── sample_report.md
+│       ├── latest_report.md        # 运行时生成，默认不提交
+│       ├── reports/                # 运行时归档，默认不提交
 │       └── eval_results.md
 ├── README.md
 ├── requirements.txt
@@ -202,7 +217,7 @@ python src/main.py "Agentic RAG"
 运行结束后，报告会保存到：
 
 ```text
-src/outputs/sample_report.md
+src/outputs/latest_report.md
 ```
 
 ### Streamlit 页面运行
@@ -251,7 +266,9 @@ Planner Node
 
 v0.3 增加了轻量级运行观测能力：
 
-- `src/outputs/sample_report.md`：最近一次生成的 Markdown 文献调研报告
+- `src/outputs/sample_report.md`：人工确认过的稳定展示样例，普通运行不会自动覆盖
+- `src/outputs/latest_report.md`：最近一次生成的 Markdown 文献调研报告，默认不提交到 GitHub
+- `src/outputs/reports/`：每次运行的历史归档报告目录，默认不提交到 GitHub
 - `src/outputs/eval_results.md`：benchmark 批量评估结果
 - `src/outputs/history.jsonl`：最近调研任务历史，每行记录一个任务
 

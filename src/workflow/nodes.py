@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from agents.filter_agent import filter_papers
-from agents.report_agent import generate_report, save_report
+from agents.report_agent import generate_report, save_runtime_reports
 from agents.summary_agent import (
     get_active_llm_provider,
     get_summary_cache_stats,
@@ -16,7 +16,7 @@ from tools.openalex_search_tool import get_last_openalex_cache_hit, search_opena
 from workflow.research_state import ResearchState
 
 
-DEFAULT_REPORT_PATH = "src/outputs/sample_report.md"
+DEFAULT_REPORT_PATH = "src/outputs/latest_report.md"
 
 
 def _with_logs(state: ResearchState, *messages: str) -> list[str]:
@@ -204,10 +204,11 @@ def report_node(state: ResearchState) -> ResearchState:
 
     try:
         report = generate_report(topic, summaries)
-        save_report(report, DEFAULT_REPORT_PATH)
+        saved_paths = save_runtime_reports(report, topic, latest_path=DEFAULT_REPORT_PATH)
         return {
             "report": report,
-            "report_path": DEFAULT_REPORT_PATH,
+            "report_path": saved_paths["report_path"],
+            "archive_report_path": saved_paths["archive_report_path"],
             "logs": _with_logs(state, f"Report: 报告已保存到 {DEFAULT_REPORT_PATH}"),
         }
     except Exception as exc:

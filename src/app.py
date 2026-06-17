@@ -52,6 +52,8 @@ if st.button("开始调研", type="primary"):
     logs = result.get("logs", []) or []
     errors = result.get("errors", []) or []
     report = result.get("report", "") or ""
+    report_path = result.get("report_path", "") or ""
+    archive_report_path = result.get("archive_report_path", "") or ""
 
     metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
     metric_col1.metric("候选论文数量", len(candidate_papers))
@@ -97,12 +99,19 @@ if st.button("开始调研", type="primary"):
         for error in errors:
             st.write(f"- {error}")
 
+    if report_path or archive_report_path:
+        st.subheader("报告输出路径")
+        if report_path:
+            st.write(f"- 最近报告：`{report_path}`")
+        if archive_report_path:
+            st.write(f"- 归档报告：`{archive_report_path}`")
+
     st.subheader("生成的 Markdown 报告")
     st.markdown(report)
     st.download_button(
         label="下载报告",
         data=report,
-        file_name="sample_report.md",
+        file_name="latest_report.md",
         mime="text/markdown",
     )
 
@@ -115,6 +124,6 @@ else:
     st.caption("暂无历史记录。运行一次调研后会自动生成。")
 
 st.caption(
-    "当前为 v0.3.2 Demo；使用 OpenAlex / arXiv 检索论文，"
+    "当前为 v0.3.4 Demo；使用 OpenAlex / arXiv 检索论文，"
     "使用 LangGraph 编排多步骤 Agent 工作流，使用 DeepSeek API 或 mock 模式生成总结。"
 )

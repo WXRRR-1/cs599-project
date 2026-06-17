@@ -17,6 +17,7 @@ class ResearchState(TypedDict, total=False):
     summaries: List[Dict[str, Any]]
     report: str
     report_path: str
+    archive_report_path: str
     evaluation: Dict[str, Any]
     cache_info: Dict[str, Any]
     logs: List[str]

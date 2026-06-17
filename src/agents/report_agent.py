@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
+import re
 
 from config import PROJECT_ROOT
 
@@ -127,10 +129,38 @@ relevance_score = keyword_score + year_score + citation_score
     return report
 
 
-def save_report(report: str, output_path: str = "src/outputs/sample_report.md") -> None:
+def save_report(report: str, output_path: str = "src/outputs/latest_report.md") -> None:
     """Save the Markdown report to disk."""
     path = Path(output_path)
     if not path.is_absolute():
         path = PROJECT_ROOT / path
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(report, encoding="utf-8")
+
+
+def _safe_report_filename(topic: str) -> str:
+    """Convert a research topic into a Windows-safe, compact filename stem."""
+    normalized = re.sub(r"\s+", "_", (topic or "research_report").strip())
+    normalized = re.sub(r'[<>:"/\\|?*]+', "_", normalized)
+    normalized = re.sub(r"_+", "_", normalized).strip("._")
+    return (normalized or "research_report")[:80]
+
+
+def save_runtime_reports(
+    report: str,
+    topic: str,
+    latest_path: str = "src/outputs/latest_report.md",
+    archive_dir: str = "src/outputs/reports",
+) -> dict[str, str]:
+    """Save the latest report and an archived copy without touching sample_report.md."""
+    save_report(report, latest_path)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    archive_name = f"{_safe_report_filename(topic)}_{timestamp}.md"
+    archive_path = str(Path(archive_dir) / archive_name).replace("\\", "/")
+    save_report(report, archive_path)
+
+    return {
+        "report_path": latest_path,
+        "archive_report_path": archive_path,
+    }
