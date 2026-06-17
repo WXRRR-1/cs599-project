@@ -10,7 +10,7 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 ## 当前版本
 
-v0.3 Project Hardening Demo
+v0.3.2 Report Scoring Polish
 
 ## 已实现功能
 
@@ -30,7 +30,7 @@ v0.3 Project Hardening Demo
 - DeepSeek 调用失败时自动回退到 mock 总结
 - 默认启用 `LLM_DRY_RUN=true`，避免开发阶段误调用 DeepSeek 产生费用
 - 使用本地 JSON 缓存减少重复 OpenAlex / arXiv 检索和重复论文总结
-- 记录最近调研任务历史到 `src/outputs/history.jsonl`
+- 运行时可记录最近调研任务历史到 `src/outputs/history.jsonl`
 - 运行 benchmark 主题并生成 `src/outputs/eval_results.md`
 
 ## v0.2 更新
@@ -49,9 +49,18 @@ v0.3 Project Hardening Demo
 - 增加轻量任务历史模块 `src/memory/history_store.py`
 - Streamlit 页面展示实际 LLM、demo fallback 状态、评估结果、执行日志和最近任务历史
 - 改进空主题、top_k 大于候选数量、API 失败和报告保存失败等边界情况的可恢复性
+
+## v0.3.1 更新
+
 - 增加 DeepSeek 成本保护：dry-run、最大总结论文数、摘要截断、超时和重试限制
 - 增加 search cache 与 summary cache，减少重复 API 调用
 - 增强论文筛选可信度，输出 `relevance_score`、`score_breakdown`、`score_reason`
+
+## v0.3.2 更新
+
+- 同步文献调研报告中的筛选评分说明
+- 在 `sample_report.md` 中展示 `relevance_score`、`score_breakdown`、`score_reason`
+- 更新文献对比表，增加来源和相关性评分字段
 
 ## 技术栈
 
@@ -99,11 +108,7 @@ cs599-project/
 │   │   └── report_agent.py
 │   └── outputs/
 │       ├── sample_report.md
-│       ├── eval_results.md
-│       ├── history.jsonl
-│       └── cache/
-│           ├── search_cache.json
-│           └── summary_cache.json
+│       └── eval_results.md
 ├── README.md
 ├── requirements.txt
 ├── .env.example
@@ -250,11 +255,11 @@ v0.3 增加了轻量级运行观测能力：
 - `src/outputs/eval_results.md`：benchmark 批量评估结果
 - `src/outputs/history.jsonl`：最近调研任务历史，每行记录一个任务
 
-`history.jsonl` 只记录主题、候选论文数、筛选论文数、实际 LLM Provider、评估状态、报告路径和错误类型，不记录 API Key。
+`history.jsonl` 只记录主题、候选论文数、筛选论文数、实际 LLM Provider、评估状态、报告路径和错误类型，不记录 API Key。该文件属于本地运行历史，默认不提交到 GitHub。
 
 ## 缓存与筛选评分
 
-v0.3 使用本地 JSON 文件减少重复调用：
+v0.3.1 起使用本地 JSON 文件减少重复调用。缓存文件在运行时自动生成，默认不提交到 GitHub：
 
 - `src/outputs/cache/search_cache.json`：缓存 OpenAlex / arXiv 检索结果
 - `src/outputs/cache/summary_cache.json`：缓存论文结构化总结
