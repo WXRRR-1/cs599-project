@@ -270,10 +270,22 @@ def evaluator_node(state: ResearchState) -> ResearchState:
     selected = state.get("selected_papers", [])
     errors = state.get("errors", [])
     active_provider = get_active_llm_provider()
+    selected_count = len(selected)
+    keyword_hit_count = sum(
+        1
+        for paper in selected
+        if paper.get("score_breakdown", {}).get("keyword_score", 0) > 0
+    )
+    total_relevance_score = sum(
+        float(paper.get("relevance_score", 0) or 0)
+        for paper in selected
+    )
+    keyword_hit_rate = round(keyword_hit_count / selected_count, 2) if selected_count else 0
+    avg_relevance_score = round(total_relevance_score / selected_count, 2) if selected_count else 0
 
     evaluation = {
         "candidate_count": len(state.get("candidate_papers", [])),
-        "paper_count": len(selected),
+        "paper_count": selected_count,
         "has_report": bool(report.strip()),
         "has_references": "## 7. 参考文献" in report and "暂无参考文献" not in report,
         "has_comparison_table": (
@@ -287,6 +299,8 @@ def evaluator_node(state: ResearchState) -> ResearchState:
         "search_source": state.get("search_source", "unknown"),
         "cache_info": state.get("cache_info", {}),
         "llm_dry_run": LLM_DRY_RUN,
+        "keyword_hit_rate": keyword_hit_rate,
+        "avg_relevance_score": avg_relevance_score,
     }
     evaluation["status"] = (
         "pass"

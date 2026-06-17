@@ -19,6 +19,8 @@ def evaluate_research_result(topic: str, result: dict, runtime_seconds: float) -
         or "| 论文 | 年份 | 来源 | 相关性评分 | 核心方法 | 主要贡献 | 局限性 |" in report
     )
     has_errors = bool(errors) or bool(evaluation.get("has_errors"))
+    keyword_hit_rate = round(float(evaluation.get("keyword_hit_rate", 0) or 0), 2)
+    avg_relevance_score = round(float(evaluation.get("avg_relevance_score", 0) or 0), 2)
 
     status = (
         "pass"
@@ -42,6 +44,8 @@ def evaluate_research_result(topic: str, result: dict, runtime_seconds: float) -
         "llm_provider": llm_provider,
         "fallback_used": llm_provider
         in {"mock", "deepseek_dry_run_mock", "deepseek_failed_fallback_mock"},
+        "keyword_hit_rate": keyword_hit_rate,
+        "avg_relevance_score": avg_relevance_score,
         "has_errors": has_errors,
         "runtime_seconds": round(runtime_seconds, 2),
         "status": status,

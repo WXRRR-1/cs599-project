@@ -31,6 +31,8 @@ def _metric_to_row(metric: dict[str, Any]) -> str:
         f"| {metric['topic']} | {metric['status']} | "
         f"{metric['candidate_count']} | {metric['selected_count']} | "
         f"{metric['llm_provider']} | {metric['fallback_used']} | "
+        f"{metric.get('keyword_hit_rate', 0)} | "
+        f"{metric.get('avg_relevance_score', 0)} | "
         f"{metric['runtime_seconds']} | {metric['has_errors']} |"
     )
 
@@ -41,6 +43,14 @@ def _build_report(metrics: list[dict[str, Any]]) -> str:
     error_count = sum(1 for item in metrics if item["has_errors"])
     avg_runtime = round(
         sum(item["runtime_seconds"] for item in metrics) / total,
+        2,
+    ) if total else 0
+    avg_keyword_hit_rate = round(
+        sum(item.get("keyword_hit_rate", 0) for item in metrics) / total,
+        2,
+    ) if total else 0
+    avg_relevance_score = round(
+        sum(item.get("avg_relevance_score", 0) for item in metrics) / total,
         2,
     ) if total else 0
     pass_rate = round(pass_count / total * 100, 1) if total else 0
@@ -54,12 +64,14 @@ def _build_report(metrics: list[dict[str, Any]]) -> str:
 - Pass count: {pass_count}
 - Pass rate: {pass_rate}%
 - Average runtime: {avg_runtime}s
+- Average keyword hit rate: {avg_keyword_hit_rate}
+- Average relevance score: {avg_relevance_score}
 - Error count: {error_count}
 
 ## Results
 
-| Topic | Status | Candidate Count | Selected Count | LLM Provider | Fallback Used | Runtime Seconds | Has Errors |
-|---|---|---:|---:|---|---|---:|---|
+| Topic | Status | Candidate Count | Selected Count | LLM Provider | Fallback Used | Keyword Hit Rate | Avg Relevance Score | Runtime Seconds | Has Errors |
+|---|---|---:|---:|---|---|---:|---:|---:|---|
 {rows}
 """
 
@@ -85,6 +97,8 @@ def run_benchmark() -> list[dict[str, Any]]:
                 "has_comparison_table": False,
                 "llm_provider": "unknown",
                 "fallback_used": False,
+                "keyword_hit_rate": 0,
+                "avg_relevance_score": 0,
                 "has_errors": True,
                 "runtime_seconds": round(runtime, 2),
                 "status": "error",

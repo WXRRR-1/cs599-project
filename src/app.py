@@ -61,6 +61,10 @@ if st.button("开始调研", type="primary"):
     metric_col3.metric("Evaluation", evaluation.get("status", "unknown"))
     metric_col4.metric("实际 LLM", evaluation.get("llm_provider", "unknown"))
 
+    eval_col1, eval_col2 = st.columns(2)
+    eval_col1.metric("Keyword Hit Rate", evaluation.get("keyword_hit_rate", 0))
+    eval_col2.metric("Avg Relevance Score", evaluation.get("avg_relevance_score", 0))
+
     cache_col1, cache_col2, cache_col3 = st.columns(3)
     cache_col1.metric("Search Cache", "hit" if cache_info.get("search_cache_hit") else "miss")
     cache_col2.metric("Summary Cache Hit", cache_info.get("summary_cache_hits", 0))
@@ -124,6 +128,6 @@ else:
     st.caption("暂无历史记录。运行一次调研后会自动生成。")
 
 st.caption(
-    "当前为 v0.3.5 Demo；使用 OpenAlex / arXiv 检索论文，"
+    "当前为 v0.3.6 Demo；使用 OpenAlex / arXiv 检索论文，"
     "使用 LangGraph 编排多步骤 Agent 工作流，使用 DeepSeek API 或 mock 模式生成总结。"
 )

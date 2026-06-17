@@ -10,7 +10,7 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 ## 当前版本
 
-v0.3.5 Search and Filtering Polish
+v0.3.6 Evaluation Metrics Polish
 
 ## 已实现功能
 
@@ -81,6 +81,13 @@ v0.3.5 Search and Filtering Polish
 - 检索结果会按 title / url 去重
 - 筛选阶段优先保留 `keyword_score > 0` 的论文
 - 如果所有候选论文 `keyword_score` 都为 0，则保留 fallback 行为，避免页面空白
+
+## v0.3.6 更新
+
+- 新增 `keyword_hit_rate`，用于衡量筛选论文中 `keyword_score > 0` 的比例
+- 新增 `avg_relevance_score`，用于衡量筛选论文平均相关性评分
+- Benchmark 报告中展示新增指标
+- Streamlit 页面展示新增评估指标
 
 ## 技术栈
 
