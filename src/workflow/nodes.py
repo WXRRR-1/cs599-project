@@ -53,46 +53,90 @@ def planner_node(state: ResearchState) -> ResearchState:
     }
 
 
+def _build_search_queries(topic: str, keywords: list[str] | None) -> list[str]:
+    queries = []
+    for item in [topic] + list(keywords or []):
+        query = " ".join(str(item or "").split())
+        if query and query.lower() not in [existing.lower() for existing in queries]:
+            queries.append(query)
+    return queries or [topic or "Agentic RAG"]
+
+
+def _paper_dedupe_key(paper: dict) -> str:
+    url = str(paper.get("url", "") or "").strip().lower()
+    if url:
+        return f"url:{url}"
+    title = " ".join(str(paper.get("title", "") or "").lower().split())
+    return f"title:{title}"
+
+
+def _dedupe_papers(papers: list[dict]) -> list[dict]:
+    seen = set()
+    unique_papers = []
+    for paper in papers:
+        key = _paper_dedupe_key(paper)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique_papers.append(paper)
+    return unique_papers
+
+
 def search_node(state: ResearchState) -> ResearchState:
     """Search papers using OpenAlex, arXiv, and optional demo fallback."""
     topic = state.get("topic") or "Agentic RAG"
     limit = max(1, int(state.get("limit") or 10))
+    queries = _build_search_queries(topic, state.get("keywords", []))
+    per_query_limit = max(1, min(limit, max(3, (limit + len(queries) - 1) // len(queries))))
 
     try:
-        papers = search_openalex_papers(topic, limit=limit)
-        openalex_cache_hit = get_last_openalex_cache_hit()
-        if papers:
-            return {
-                "candidate_papers": papers,
-                "search_source": "OpenAlex",
-                "cache_info": _with_cache_info(
-                    state,
-                    search_cache_hit=openalex_cache_hit,
-                    search_cache_source="OpenAlex",
-                ),
-                "logs": _with_logs(
-                    state,
-                    f"Search: 使用 OpenAlex，候选论文数量 {len(papers)}",
-                    f"Search cache: {'hit' if openalex_cache_hit else 'miss'}",
-                ),
-            }
+        collected_papers = []
+        used_sources = set()
+        cache_hits = []
+        logs = _with_logs(
+            state,
+            f"Search: 使用 {len(queries)} 个 query 检索，每个 query limit={per_query_limit}",
+        )
 
-        logs = _with_logs(state, "Search: OpenAlex 暂无可用结果，切换到 arXiv")
-        papers = search_arxiv_papers(topic, limit=limit)
-        arxiv_cache_hit = get_last_arxiv_cache_hit()
+        for query in queries:
+            openalex_papers = search_openalex_papers(query, limit=per_query_limit)
+            openalex_cache_hit = get_last_openalex_cache_hit()
+            cache_hits.append(openalex_cache_hit)
+            logs.append(
+                f"Search: query='{query}' OpenAlex 返回 {len(openalex_papers)} 篇 "
+                f"cache={'hit' if openalex_cache_hit else 'miss'}"
+            )
+            if openalex_papers:
+                collected_papers.extend(openalex_papers)
+                used_sources.add("OpenAlex")
+                continue
+
+            arxiv_papers = search_arxiv_papers(query, limit=per_query_limit)
+            arxiv_cache_hit = get_last_arxiv_cache_hit()
+            cache_hits.append(arxiv_cache_hit)
+            logs.append(
+                f"Search: query='{query}' arXiv 返回 {len(arxiv_papers)} 篇 "
+                f"cache={'hit' if arxiv_cache_hit else 'miss'}"
+            )
+            if arxiv_papers:
+                collected_papers.extend(arxiv_papers)
+                used_sources.add("arXiv")
+
+        papers = _dedupe_papers(collected_papers)
         if papers:
+            search_source = "mixed" if len(used_sources) > 1 else next(iter(used_sources))
             return {
                 "candidate_papers": papers,
-                "search_source": "arXiv",
+                "search_source": search_source,
                 "cache_info": _with_cache_info(
                     state,
-                    search_cache_hit=arxiv_cache_hit,
-                    search_cache_source="arXiv",
+                    search_cache_hit=any(cache_hits),
+                    search_cache_source=search_source,
+                    search_query_count=len(queries),
                 ),
                 "logs": logs
                 + [
-                    f"Search: 使用 arXiv，候选论文数量 {len(papers)}",
-                    f"Search cache: {'hit' if arxiv_cache_hit else 'miss'}",
+                    f"Search: 合并去重后候选论文数量 {len(papers)}",
                 ],
             }
 
@@ -107,10 +151,10 @@ def search_node(state: ResearchState) -> ResearchState:
                     state,
                     search_cache_hit=False,
                     search_cache_source="demo",
+                    search_query_count=len(queries),
                 ),
-                "logs": logs
-                + [
-                    "Search: arXiv 暂无可用结果，触发 demo fallback",
+                "logs": logs + [
+                    "Search: 多查询后暂无可用结果，触发 demo fallback",
                     f"Search: 使用内置示例论文，候选论文数量 {len(papers)}",
                 ],
             }

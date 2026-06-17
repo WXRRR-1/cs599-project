@@ -10,7 +10,7 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 ## 当前版本
 
-v0.3.4 Output Report Separation
+v0.3.5 Search and Filtering Polish
 
 ## 已实现功能
 
@@ -74,6 +74,13 @@ v0.3.4 Output Report Separation
 - `src/outputs/latest_report.md` 作为最近一次运行自动生成的报告
 - `src/outputs/reports/` 作为可选历史归档目录
 - 普通运行和 benchmark 不再覆盖 `sample_report.md`
+
+## v0.3.5 更新
+
+- Search Node 使用 topic + Planner keywords 多查询检索
+- 检索结果会按 title / url 去重
+- 筛选阶段优先保留 `keyword_score > 0` 的论文
+- 如果所有候选论文 `keyword_score` 都为 0，则保留 fallback 行为，避免页面空白
 
 ## 技术栈
 

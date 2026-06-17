@@ -126,13 +126,35 @@ def filter_papers(
     """Select representative papers using an explainable relevance score."""
     valid_papers = [paper for paper in papers if paper.get("title") and paper.get("abstract")]
     scored_papers = [score_paper(paper, topic=topic, keywords=keywords) for paper in valid_papers]
-    sorted_papers = sorted(
-        scored_papers,
-        key=lambda paper: (
+
+    def sort_key(paper: dict) -> tuple[int, int, int]:
+        return (
             paper.get("relevance_score", 0),
             _safe_int(paper.get("year")),
             _safe_int(paper.get("citationCount")),
-        ),
-        reverse=True,
-    )
+        )
+
+    preferred_papers = [
+        paper
+        for paper in scored_papers
+        if paper.get("score_breakdown", {}).get("keyword_score", 0) > 0
+    ]
+    fallback_papers = [
+        paper
+        for paper in scored_papers
+        if paper.get("score_breakdown", {}).get("keyword_score", 0) <= 0
+    ]
+
+    sorted_preferred = sorted(preferred_papers, key=sort_key, reverse=True)
+    sorted_fallback = sorted(fallback_papers, key=sort_key, reverse=True)
+
+    if sorted_preferred:
+        sorted_papers = sorted_preferred + sorted_fallback
+    else:
+        sorted_papers = sorted(
+            scored_papers,
+            key=sort_key,
+            reverse=True,
+        )
+
     return sorted_papers[: max(1, top_k)]

@@ -124,6 +124,6 @@ else:
     st.caption("暂无历史记录。运行一次调研后会自动生成。")
 
 st.caption(
-    "当前为 v0.3.4 Demo；使用 OpenAlex / arXiv 检索论文，"
+    "当前为 v0.3.5 Demo；使用 OpenAlex / arXiv 检索论文，"
     "使用 LangGraph 编排多步骤 Agent 工作流，使用 DeepSeek API 或 mock 模式生成总结。"
 )

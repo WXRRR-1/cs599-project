@@ -34,7 +34,7 @@ def run_research(topic: str, limit: int = 10, top_k: int = 5) -> dict:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="ResearchFlow-Agent v0.3.4 Demo")
+    parser = argparse.ArgumentParser(description="ResearchFlow-Agent v0.3.5 Demo")
     parser.add_argument("topic", nargs="?", default="Agentic RAG", help="研究主题")
     parser.add_argument("--limit", type=int, default=10, help="检索论文数量")
     parser.add_argument("--top-k", type=int, default=5, help="筛选论文数量")
