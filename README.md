@@ -10,7 +10,7 @@ ResearchFlow-Agent 是一个面向研究生的自动化文献调研与报告生�
 
 ## 当前版本
 
-v0.3.6 Evaluation Metrics Polish
+v0.3.7 Academic Filtering Polish
 
 ## 已实现功能
 
@@ -88,6 +88,14 @@ v0.3.6 Evaluation Metrics Polish
 - 新增 `avg_relevance_score`，用于衡量筛选论文平均相关性评分
 - Benchmark 报告中展示新增指标
 - Streamlit 页面展示新增评估指标
+
+## v0.3.7 更新
+
+- 将关键词评分升级为关键词覆盖率、标题命中比例和摘要命中比例的加权模型
+- 将引用量评分升级为年均引用量 `citation_per_year`，降低老论文累计引用优势
+- 筛选阶段优先保留 `keyword_score >= 10` 或 `keyword_coverage >= 0.25` 的论文
+- Search Node 对多查询结果按用户 `limit` 截断，并对单个 query 失败做可恢复处理
+- 同步 README 与 Markdown 报告中的筛选评分说明
 
 ## 技术栈
 
@@ -300,13 +308,21 @@ v0.3.1 起使用本地 JSON 文件减少重复调用。缓存文件在运行时�
 论文筛选使用可解释评分公式：
 
 ```text
-relevance_score = 关键词匹配分 + 年份分 + 引用量分
+relevance_score = keyword_score + year_score + citation_score
 ```
+
+其中：
+
+- `keyword_score`：主题相关性，最高 45 分。由关键词覆盖率、标题命中比例、摘要命中比例加权得到。
+- `year_score`：时间新近性，最高 25 分。论文越新，分数越高。
+- `citation_score`：年均影响力，最高 30 分。基于 `citation_per_year = citationCount / max(1, current_year - year + 1)` 计算。
+
+系统优先选择 `keyword_score >= 10` 或 `keyword_coverage >= 0.25` 的论文；如果所有候选论文都未达到该门槛，则回退到完整候选集排序，避免页面空白。
 
 筛选后的论文会包含：
 
 - `relevance_score`：综合相关性分数
-- `score_breakdown`：关键词、年份、引用量三部分分数
+- `score_breakdown`：关键词、年份、年均引用量等评分构成
 - `score_reason`：自然语言评分原因
 
 这些字段会在 Streamlit 的筛选后论文表格中展示。

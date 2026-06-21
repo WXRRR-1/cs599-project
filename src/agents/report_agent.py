@@ -24,6 +24,8 @@ def _format_score_breakdown(summary: dict) -> str:
             f"  - keyword_score: {breakdown.get('keyword_score', 'N/A')}",
             f"  - year_score: {breakdown.get('year_score', 'N/A')}",
             f"  - citation_score: {breakdown.get('citation_score', 'N/A')}",
+            f"  - keyword_coverage: {breakdown.get('keyword_coverage', 'N/A')}",
+            f"  - citation_per_year: {breakdown.get('citation_per_year', 'N/A')}",
         ]
     )
 
@@ -88,7 +90,7 @@ def generate_report(topic: str, summaries: list[dict]) -> str:
 
 ## 2. 检索与筛选说明
 
-本项目首先根据用户输入的研究主题调用 OpenAlex / arXiv 等学术检索工具获取候选论文，失败时可使用内置示例论文保持 Demo 可运行。系统会过滤掉缺少标题或摘要的结果，然后使用轻量级规则评分方法筛选代表性论文。
+本项目首先根据用户输入的研究主题调用 OpenAlex / arXiv 等学术检索工具获取候选论文，失败时可使用内置示例论文保持 Demo 可运行。系统会过滤掉缺少标题或摘要的结果，然后使用轻量级、可解释的规则评分方法筛选代表性论文。
 
 论文筛选评分公式如下：
 
@@ -98,11 +100,11 @@ relevance_score = keyword_score + year_score + citation_score
 
 其中：
 
-- `keyword_score`：根据研究主题关键词在论文标题和摘要中的命中情况计算；
-- `year_score`：根据论文发表年份的新近程度计算；
-- `citation_score`：根据论文引用量区间计算。
+- `keyword_score`：根据关键词覆盖率、标题命中比例和摘要命中比例计算，最高 45 分；
+- `year_score`：根据论文发表年份的新近程度计算，最高 25 分；
+- `citation_score`：根据年均引用量 `citation_per_year` 计算，最高 30 分。
 
-系统最终按照 `relevance_score` 从高到低排序，并选择排名靠前的论文作为代表性文献。随后基于论文标题和摘要生成中文结构化总结。
+系统会优先选择 `keyword_score >= 10` 或 `keyword_coverage >= 0.25` 的论文；如果候选论文全部未达到该门槛，则回退到完整候选集排序，避免页面空白。排序时依次参考 `relevance_score`、年份、年均引用量和总引用量。随后基于论文标题和摘要生成中文结构化总结。
 
 ## 3. 代表性论文列表
 

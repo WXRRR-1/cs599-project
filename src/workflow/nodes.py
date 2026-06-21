@@ -89,16 +89,16 @@ def search_node(state: ResearchState) -> ResearchState:
     queries = _build_search_queries(topic, state.get("keywords", []))
     per_query_limit = max(1, min(limit, max(3, (limit + len(queries) - 1) // len(queries))))
 
-    try:
-        collected_papers = []
-        used_sources = set()
-        cache_hits = []
-        logs = _with_logs(
-            state,
-            f"Search: 使用 {len(queries)} 个 query 检索，每个 query limit={per_query_limit}",
-        )
+    collected_papers = []
+    used_sources = set()
+    cache_hits = []
+    logs = _with_logs(
+        state,
+        f"Search: 使用 {len(queries)} 个 query 检索，每个 query limit={per_query_limit}",
+    )
 
-        for query in queries:
+    for query in queries:
+        try:
             openalex_papers = search_openalex_papers(query, limit=per_query_limit)
             openalex_cache_hit = get_last_openalex_cache_hit()
             cache_hits.append(openalex_cache_hit)
@@ -121,57 +121,55 @@ def search_node(state: ResearchState) -> ResearchState:
             if arxiv_papers:
                 collected_papers.extend(arxiv_papers)
                 used_sources.add("arXiv")
+        except Exception as exc:
+            logs.append(f"Search: query='{query}' 检索失败，错误类型 {exc.__class__.__name__}")
+            continue
 
-        papers = _dedupe_papers(collected_papers)
-        if papers:
-            search_source = "mixed" if len(used_sources) > 1 else next(iter(used_sources))
-            return {
-                "candidate_papers": papers,
-                "search_source": search_source,
-                "cache_info": _with_cache_info(
-                    state,
-                    search_cache_hit=any(cache_hits),
-                    search_cache_source=search_source,
-                    search_query_count=len(queries),
-                ),
-                "logs": logs
-                + [
-                    f"Search: 合并去重后候选论文数量 {len(papers)}",
-                ],
-            }
-
-        if USE_DEMO_FALLBACK:
-            papers = get_demo_papers(topic, limit=limit)
-            for paper in papers:
-                paper.setdefault("source", "demo")
-            return {
-                "candidate_papers": papers,
-                "search_source": "demo",
-                "cache_info": _with_cache_info(
-                    state,
-                    search_cache_hit=False,
-                    search_cache_source="demo",
-                    search_query_count=len(queries),
-                ),
-                "logs": logs + [
-                    "Search: 多查询后暂无可用结果，触发 demo fallback",
-                    f"Search: 使用内置示例论文，候选论文数量 {len(papers)}",
-                ],
-            }
-
+    deduped_papers = _dedupe_papers(collected_papers)
+    papers = deduped_papers[:limit]
+    if papers:
+        search_source = "mixed" if len(used_sources) > 1 else next(iter(used_sources))
         return {
-            "candidate_papers": [],
-            "search_source": "none",
-            "logs": logs + ["Search: 未启用 demo fallback，候选论文数量 0"],
-            "errors": _with_errors(state, "Search: 未检索到可用论文"),
+            "candidate_papers": papers,
+            "search_source": search_source,
+            "cache_info": _with_cache_info(
+                state,
+                search_cache_hit=any(cache_hits),
+                search_cache_source=search_source,
+                search_query_count=len(queries),
+            ),
+            "logs": logs
+            + [
+                f"Search: 合并去重后候选论文数量 {len(deduped_papers)}",
+                f"Search: 按用户 limit={limit} 截断后候选论文数量 {len(papers)}",
+            ],
         }
-    except Exception as exc:
+
+    if USE_DEMO_FALLBACK:
+        papers = get_demo_papers(topic, limit=limit)
+        for paper in papers:
+            paper.setdefault("source", "demo")
         return {
-            "candidate_papers": [],
-            "search_source": "error",
-            "logs": _with_logs(state, "Search: 检索节点异常，候选论文数量 0"),
-            "errors": _with_errors(state, f"Search: {exc.__class__.__name__}"),
+            "candidate_papers": papers,
+            "search_source": "demo",
+            "cache_info": _with_cache_info(
+                state,
+                search_cache_hit=False,
+                search_cache_source="demo",
+                search_query_count=len(queries),
+            ),
+            "logs": logs + [
+                "Search: 多查询后暂无可用结果，触发 demo fallback",
+                f"Search: 使用内置示例论文，候选论文数量 {len(papers)}",
+            ],
         }
+
+    return {
+        "candidate_papers": [],
+        "search_source": "none",
+        "logs": logs + ["Search: 未启用 demo fallback，候选论文数量 0"],
+        "errors": _with_errors(state, "Search: 未检索到可用论文"),
+    }
 
 
 def filter_node(state: ResearchState) -> ResearchState:
@@ -253,7 +251,11 @@ def report_node(state: ResearchState) -> ResearchState:
             "report": report,
             "report_path": saved_paths["report_path"],
             "archive_report_path": saved_paths["archive_report_path"],
-            "logs": _with_logs(state, f"Report: 报告已保存到 {DEFAULT_REPORT_PATH}"),
+            "logs": _with_logs(
+                state,
+                f"Report: 报告已保存到 {saved_paths['report_path']}",
+                f"Report: 归档报告已保存到 {saved_paths['archive_report_path']}",
+            ),
         }
     except Exception as exc:
         return {
