@@ -15,6 +15,7 @@ from config import (
     LLM_TIMEOUT_SECONDS,
     MAX_ABSTRACT_CHARS,
     MAX_LLM_PAPERS,
+    NETWORK_PROXY,
 )
 
 
@@ -114,6 +115,19 @@ def _parse_llm_json(content: str) -> dict:
     return json.loads(text)
 
 
+def _build_deepseek_http_client():
+    """Build a project-scoped HTTP client for DeepSeek when NETWORK_PROXY is set."""
+    if not NETWORK_PROXY:
+        return None
+
+    import httpx
+
+    try:
+        return httpx.Client(proxy=NETWORK_PROXY, timeout=LLM_TIMEOUT_SECONDS)
+    except TypeError:
+        return httpx.Client(proxies=NETWORK_PROXY, timeout=LLM_TIMEOUT_SECONDS)
+
+
 def _summary_cache_key(paper: dict, provider_mode: str) -> str:
     return make_cache_key(
         "summary",
@@ -153,11 +167,16 @@ def _call_deepseek(paper: dict) -> dict:
     if not DEEPSEEK_API_KEY:
         raise ValueError("DEEPSEEK_API_KEY 未配置")
 
-    client = OpenAI(
-        api_key=DEEPSEEK_API_KEY,
-        base_url=DEEPSEEK_BASE_URL,
-        timeout=LLM_TIMEOUT_SECONDS,
-    )
+    http_client = _build_deepseek_http_client()
+    client_kwargs = {
+        "api_key": DEEPSEEK_API_KEY,
+        "base_url": DEEPSEEK_BASE_URL,
+        "timeout": LLM_TIMEOUT_SECONDS,
+    }
+    if http_client is not None:
+        client_kwargs["http_client"] = http_client
+
+    client = OpenAI(**client_kwargs)
 
     last_error: Exception | None = None
     for _ in range(LLM_MAX_RETRIES + 1):

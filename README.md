@@ -206,6 +206,32 @@ mock fallback 不需要任何 LLM API Key，也可以跑通完整 Demo。也可�
 
 程序日志只显示 dry-run、fallback 和错误类型，不输出 API Key 或请求头。
 
+## DeepSeek 代理配置说明
+
+本项目的 DeepSeek SDK client 会自动读取 `.env` 中的 `NETWORK_PROXY`；代码不会修改系统全局代理，也不需要在 PowerShell 或 CMD 中手动设置 `HTTP_PROXY` / `HTTPS_PROXY`。
+
+如果使用 Clash，本地 `.env` 可以设置：
+
+```env
+NETWORK_PROXY=http://127.0.0.1:7897
+```
+
+如果不需要代理，可以留空：
+
+```env
+NETWORK_PROXY=
+```
+
+真实调用 DeepSeek 前需要确认：
+
+```env
+LLM_PROVIDER=deepseek
+LLM_DRY_RUN=false
+DEEPSEEK_API_KEY=你的 DeepSeek API Key
+```
+
+如果网络失败或 DeepSeek 调用异常，系统仍会自动 fallback 到 mock，总体 Demo 流程不会中断。`.env` 中包含真实 API Key，禁止提交到 GitHub。
+
 ## 学术 API 与网络配置
 
 OpenAlex 和 arXiv 用于论文检索：
